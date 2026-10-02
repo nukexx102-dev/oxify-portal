@@ -1,0 +1,83 @@
+@import "tailwindcss";
+
+/*
+ * Oxify portal palette, from the Claude Design handoff: near-black canvas
+ * with soft blue ambient glows, translucent panels, and a gold accent used
+ * sparingly (status pill, current step, CTAs). Warning is for "your
+ * shipment is delayed"; danger is reserved for "you owe money".
+ */
+:root {
+  --color-canvas: #06080d;
+  --color-panel: rgba(13, 17, 25, 0.82);
+  --color-tile: #111623;
+  --color-doc: #0f141e;
+  --color-line: #1c2230;
+  --color-line-strong: #262d3b;
+  --color-divider: #171c27;
+  --color-ink: #eef1f5;
+  --color-body: #a9b1be;
+  --color-muted: #8a93a2;
+  --color-disabled: #4a5263;
+  --color-accent: #cdb584;
+  --color-accent-hover: #d8c293;
+  --color-on-accent: #0a0d14;
+  --color-warning: #e3a35a;
+  --color-danger: #ef6b6b;
+}
+
+@theme inline {
+  --color-canvas: var(--color-canvas);
+  --color-panel: var(--color-panel);
+  --color-tile: var(--color-tile);
+  --color-doc: var(--color-doc);
+  --color-line: var(--color-line);
+  --color-line-strong: var(--color-line-strong);
+  --color-divider: var(--color-divider);
+  --color-ink: var(--color-ink);
+  --color-body: var(--color-body);
+  --color-muted: var(--color-muted);
+  --color-disabled: var(--color-disabled);
+  --color-accent: var(--color-accent);
+  --color-accent-hover: var(--color-accent-hover);
+  --color-on-accent: var(--color-on-accent);
+  --color-warning: var(--color-warning);
+  --color-danger: var(--color-danger);
+  --font-sans: var(--font-inter);
+}
+
+html {
+  color-scheme: dark;
+}
+
+body {
+  color: var(--color-ink);
+  background-color: var(--color-canvas);
+  background-image:
+    radial-gradient(ellipse 60% 45% at -5% 8%, rgba(74, 112, 150, 0.2), transparent 70%),
+    radial-gradient(ellipse 50% 40% at 108% 92%, rgba(74, 112, 150, 0.16), transparent 70%);
+  background-attachment: fixed;
+}
+
+/* Status-dot halo — the dot's own text color sets the ring color. */
+@keyframes ox-pulse {
+  0% {
+    box-shadow: 0 0 0 0 currentColor;
+  }
+  70% {
+    box-shadow: 0 0 0 7px transparent;
+  }
+  100% {
+    box-shadow: 0 0 0 0 transparent;
+  }
+}
+
+@keyframes ox-fade {
+  from {
+    opacity: 0;
+    transform: translateY(6px);
+  }
+  to {
+    opacity: 1;
+    transform: none;
+  }
+}
