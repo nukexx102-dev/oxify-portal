@@ -23,7 +23,7 @@ the portal. The names it reads are listed in `ORDER_FIELDS` in
 `src/lib/clickup.ts`. `Order Number` and `Customer Email` are required for
 a lookup. The others fill the page when set:
 
-- `Chamber Model` → chamber name, spec line, and product photo
+- `Chamber Model` → chamber name and spec line
 - `🔧 Configuration` → configuration row. "Water Chiller AC" adds the
   "ships separately" note.
 - `Tracking Link`, `Delivery Window`, `📦 Package Count`,
@@ -35,8 +35,8 @@ a lookup. The others fill the page when set:
   `💰 Link - Remaining Balance` → "Complete your remaining balance" card,
   shown from Ready to Ship onward
 - Task assignee → the order specialist card (name and ClickUp photo)
-- Images attached to the task → the "Your chamber" gallery, after the
-  official product photo
+- `Order Photos` → the "Your chamber" gallery (images only; the section
+  is hidden until the first photo is added)
 
 Customers can type `OXFY1020`, `#oxfy1020` or just `1020`.
 

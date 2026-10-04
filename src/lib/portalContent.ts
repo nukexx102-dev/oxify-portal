@@ -58,6 +58,14 @@ export const JOURNEY = [
   },
 ] as const;
 
+// Columns for the expandable "View the full journey" list — every JOURNEY
+// status should appear in exactly one phase.
+export const JOURNEY_PHASES = [
+  { title: "Production", statuses: ["in production", "ready to ship"] },
+  { title: "Shipping & customs", statuses: ["in transit"] },
+  { title: "Premium White Glove delivery", statuses: ["delivery scheduled", "delivered"] },
+];
+
 // Before production starts — the rail shows no current step yet.
 export const PRE_PRODUCTION_STATUSES = new Set(["order received"]);
 // Orders that ended another way — shown as a simple message, no rail.
@@ -122,20 +130,20 @@ export const STATUS_COPY: Record<string, StatusCopy> = {
 
 // Keyed by the ClickUp "Chamber Model" dropdown value. Models not listed here
 // (e.g. Macy Pan models sold through Oxify) still show their name, just
-// without a product photo or spec line.
-export const PRODUCTS: Record<string, { name: string; spec: string; image: string }> = {
-  "Nova Duo": { name: "Oxify Nova Duo", spec: "Hard shell · 2.0 ATA · Sitting · 1–2 people", image: "/products/nova-duo.png" },
-  "Nova Duo Pro": { name: "Oxify Nova Duo Pro", spec: "Hard shell · 2.0 ATA · Sitting · 1–5 people", image: "/products/nova-duo-pro.png" },
-  "Nova Quad": { name: "Oxify Nova Quad", spec: "Hard shell · 2.0 ATA · Sitting · 1–5 people", image: "/products/nova-quad.png" },
-  Club: { name: "Oxify Club", spec: "Hard shell · 2.0 ATA · Walk-in cabin · Up to 4 people", image: "/products/club.png" },
-  Forge: { name: "Oxify Forge", spec: "Hard shell · 2.0 ATA · Sitting · 1 person", image: "/products/forge.png" },
-  "Luma Pro": { name: "Oxify Luma Pro", spec: "Hard shell · 2.0 ATA · Lying · 1 person", image: "/products/luma-pro.png" },
-  "Luma Standard": { name: "Oxify Luma Standard", spec: "Hard shell · 2.0 ATA · Lying · 1 person", image: "/products/luma-standard.png" },
-  "Flow Extended": { name: "Oxify Flow Extended", spec: "Soft shell · 1.5 ATA · Sitting · 1 person", image: "/products/flow-extended.png" },
-  Flow: { name: "Oxify Flow", spec: "Soft shell · 1.5 ATA · Sitting · 1 person", image: "/products/flow.png" },
-  Sit: { name: "Oxify Sit", spec: "Soft shell · 1.5 ATA · Sitting · 1 person", image: "/products/sit.png" },
-  "Sit Plus": { name: "Oxify Sit Plus", spec: "Soft shell · 1.4 ATA · Wheelchair accessible · 1 person", image: "/products/sit-plus.png" },
-  Rest: { name: "Oxify Rest", spec: "Soft shell · 1.5 ATA · Lying · 1 person", image: "/products/rest.png" },
+// without the "Oxify" prefix or a spec line.
+export const PRODUCTS: Record<string, { name: string; spec: string }> = {
+  "Nova Duo": { name: "Oxify Nova Duo", spec: "Hard shell · 2.0 ATA · Sitting · 1–2 people" },
+  "Nova Duo Pro": { name: "Oxify Nova Duo Pro", spec: "Hard shell · 2.0 ATA · Sitting · 1–5 people" },
+  "Nova Quad": { name: "Oxify Nova Quad", spec: "Hard shell · 2.0 ATA · Sitting · 1–5 people" },
+  Club: { name: "Oxify Club", spec: "Hard shell · 2.0 ATA · Walk-in cabin · Up to 4 people" },
+  Forge: { name: "Oxify Forge", spec: "Hard shell · 2.0 ATA · Sitting · 1 person" },
+  "Luma Pro": { name: "Oxify Luma Pro", spec: "Hard shell · 2.0 ATA · Lying · 1 person" },
+  "Luma Standard": { name: "Oxify Luma Standard", spec: "Hard shell · 2.0 ATA · Lying · 1 person" },
+  "Flow Extended": { name: "Oxify Flow Extended", spec: "Soft shell · 1.5 ATA · Sitting · 1 person" },
+  Flow: { name: "Oxify Flow", spec: "Soft shell · 1.5 ATA · Sitting · 1 person" },
+  Sit: { name: "Oxify Sit", spec: "Soft shell · 1.5 ATA · Sitting · 1 person" },
+  "Sit Plus": { name: "Oxify Sit Plus", spec: "Soft shell · 1.4 ATA · Wheelchair accessible · 1 person" },
+  Rest: { name: "Oxify Rest", spec: "Soft shell · 1.5 ATA · Lying · 1 person" },
 };
 
 // Same document for every customer. Empty = "Coming soon" card.

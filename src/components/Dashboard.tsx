@@ -3,7 +3,7 @@
 import { useEffect, useRef, useState } from "react";
 import Image from "next/image";
 import type { DashboardData } from "@/lib/clickup";
-import { CONTACT, DELIVERY, JOURNEY, PRODUCTS, SHARED_DOCS } from "@/lib/portalContent";
+import { CONTACT, DELIVERY, JOURNEY, JOURNEY_PHASES, PRODUCTS, SHARED_DOCS } from "@/lib/portalContent";
 
 type Props = {
   data: DashboardData;
@@ -185,14 +185,12 @@ export default function Dashboard({ data, onReset }: Props) {
     },
   ];
 
-  const photos: Photo[] = [
-    ...(product ? [{ kind: "product" as const, src: product.image, alt: chamberName }] : []),
-    ...order.photos.map((p) => ({
-      kind: "order" as const,
-      src: `/api/orders/photo?taskId=${order.taskId}&attachmentId=${p.id}`,
-      alt: p.title,
-    })),
-  ];
+  // From the order's "Order Photos" field in ClickUp, streamed through our
+  // own /api/orders/photo proxy since ClickUp file links can expire.
+  const photos: Photo[] = order.photos.map((p) => ({
+    src: `/api/orders/photo?taskId=${encodeURIComponent(order.taskId)}&attachmentId=${encodeURIComponent(p.id)}`,
+    alt: p.title,
+  }));
 
   const showBalanceDue =
     order.paymentTerms === "Initial Deposit" &&
@@ -487,10 +485,12 @@ function ContactButtons({ coordFirst }: { coordFirst: string | null }) {
 // "Where your order is" — one milestone per journey status. Desktop: a
 // horizontal rail with hover tooltips, then the Now/Next row. Mobile: the
 // Now/Next row first, then a vertical rail; tapping a milestone pins its
-// tooltip open.
+// tooltip open. "View the full journey" expands every step, grouped by
+// phase, with its full description.
 function JourneyPanel({ currentStepIndex }: { currentStepIndex: number }) {
   const [hovered, setHovered] = useState<number | null>(null);
   const [pinned, setPinned] = useState<number | null>(null);
+  const [journeyOpen, setJourneyOpen] = useState(false);
   const total = JOURNEY.length;
   const last = total - 1;
 
@@ -602,6 +602,65 @@ function JourneyPanel({ currentStepIndex }: { currentStepIndex: number }) {
           })}
         </ol>
       </div>
+
+      <button
+        type="button"
+        onClick={() => setJourneyOpen((v) => !v)}
+        aria-expanded={journeyOpen}
+        className="flex min-h-11 w-full items-center justify-between gap-4 pt-3.5 text-left text-[13.5px] font-medium text-ink transition-colors hover:text-accent"
+      >
+        <span>{journeyOpen ? "Hide the full journey" : "View the full journey"}</span>
+        <span className="flex items-center gap-[9px] text-muted">
+          <span className="text-[12px] font-medium tabular-nums">All {total} steps</span>
+          <Icon name="chevronDown" size={14} strokeWidth={2} className={"transition-transform duration-200 " + (journeyOpen ? "rotate-180" : "")} />
+        </span>
+      </button>
+
+      {journeyOpen && (
+        <div className="grid grid-cols-1 gap-5 pt-[22px] [animation:ox-fade_260ms_ease_both] min-[720px]:grid-cols-3">
+          {JOURNEY_PHASES.map((phase) => (
+            <div key={phase.title} className="flex flex-col gap-1">
+              <span className={`${eyebrow} px-2.5 pb-2 text-muted`}>{phase.title}</span>
+              {phase.statuses.map((status) => {
+                const i = JOURNEY.findIndex((s) => s.status === status);
+                if (i === -1) return null;
+                const step = JOURNEY[i];
+                const done = currentStepIndex > i;
+                const current = currentStepIndex === i;
+                return (
+                  <div
+                    key={status}
+                    className={
+                      "flex items-start gap-3 rounded-[10px] px-2.5 py-[9px] transition-[background-color,box-shadow] duration-200 hover:bg-accent/8 hover:shadow-[inset_0_0_0_1px_rgba(205,181,132,.4),0_0_20px_rgba(205,181,132,.2)] " +
+                      (current ? "bg-accent/6 shadow-[inset_0_0_0_1px_rgba(205,181,132,.25)]" : "")
+                    }
+                  >
+                    <span
+                      className={
+                        "grid h-[34px] w-[34px] flex-none place-items-center rounded-[10px] border transition-all duration-200 " +
+                        (current
+                          ? "border-accent bg-accent/14 text-accent shadow-[0_0_16px_rgba(205,181,132,.4)]"
+                          : done
+                            ? "border-accent/35 bg-tile text-accent"
+                            : "border-line-strong bg-tile text-muted")
+                      }
+                    >
+                      <Icon name={step.icon} size={16} />
+                    </span>
+                    <span className="flex min-w-0 flex-col gap-1 pt-[7px]">
+                      <span className={"text-[13.5px] leading-[1.3] " + (current ? "font-semibold text-accent" : done ? "text-ink" : "text-muted")}>
+                        {step.label}
+                        {current && <span className="ml-2 text-[9.5px] font-semibold uppercase tracking-[1.2px]">Current</span>}
+                      </span>
+                      <span className="text-[12px] font-light leading-[1.55] text-body">{step.tip}</span>
+                    </span>
+                  </div>
+                );
+              })}
+            </div>
+          ))}
+        </div>
+      )}
     </section>
   );
 }
@@ -625,11 +684,10 @@ function EtaCard({ label, value }: { label: string; value: string | null }) {
   );
 }
 
-type Photo = { kind: "product" | "order"; src: string; alt: string };
+type Photo = { src: string; alt: string };
 
-// Horizontal snap-scrolling gallery: the official product shot first, then
-// photos ops attaches to the ClickUp task (streamed through our own
-// /api/orders/photo proxy, since ClickUp attachment links can expire).
+// Horizontal snap-scrolling gallery of the order's photos — arrow buttons
+// hide themselves at either end, and a fade marks that more is off-screen.
 function PhotoCarousel({ photos }: { photos: Photo[] }) {
   const trackRef = useRef<HTMLDivElement>(null);
   const [atStart, setAtStart] = useState(true);
@@ -691,12 +749,8 @@ function PhotoCarousel({ photos }: { photos: Photo[] }) {
               rel="noopener noreferrer"
               className="relative block aspect-[4/3] w-[78%] flex-none snap-start overflow-hidden rounded-[14px] border border-line bg-[radial-gradient(ellipse_at_50%_40%,#1a2130,#0d1119_75%)] transition-all duration-200 hover:-translate-y-0.5 hover:border-accent/35 hover:shadow-[0_0_28px_rgba(205,181,132,0.25)] min-[720px]:w-[300px]"
             >
-              {photo.kind === "product" ? (
-                <Image src={photo.src} alt={photo.alt} fill sizes="300px" className="object-contain p-3" />
-              ) : (
-                // eslint-disable-next-line @next/next/no-img-element -- dynamic same-origin proxy URL, not a static asset
-                <img src={photo.src} alt={photo.alt} loading="lazy" onLoad={updateEdges} className="h-full w-full object-cover" />
-              )}
+              {/* eslint-disable-next-line @next/next/no-img-element -- dynamic same-origin proxy URL, not a static asset */}
+              <img src={photo.src} alt={photo.alt} loading="lazy" onLoad={updateEdges} className="h-full w-full object-cover" />
             </a>
           ))}
         </div>

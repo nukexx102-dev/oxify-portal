@@ -40,6 +40,7 @@ const ORDER_FIELDS = {
   paymentTerms: "💰 Payment Terms", // dropdown: Fully Paid / Initial Deposit / Split Payments
   remainingBalance: "💰 Remaining Balance", // number
   remainingBalanceLink: "💰 Link - Remaining Balance", // url — "Pay Now" target
+  orderPhotos: "Order Photos", // files — the "Your chamber" gallery
 } as const;
 
 // Same shape as Morelli's "Portal Status Copy" list, so an Oxify copy of it
@@ -65,23 +66,27 @@ type RawAssignee = {
   username?: string;
   initials?: string;
   // A public, unauthenticated URL (attachments.clickup.com) — doesn't need
-  // a proxy, unlike task attachment URLs (see fetchPhotos()/photo route).
+  // a proxy, unlike Order Photos files (see getOrderPhoto()/photo route).
   profilePicture?: string | null;
 };
 
 type RawTask = {
   id: string;
   name: string;
+  list?: { id?: string };
   status?: { status?: string };
   custom_fields?: RawCustomField[];
   assignees?: RawAssignee[];
 };
 
+// One file in a ClickUp "files" custom field's value array.
 type RawAttachment = {
   id: string;
   title?: string;
   extension?: string;
   mimetype?: string;
+  url?: string;
+  url_w_host?: string;
 };
 
 const IMAGE_EXTENSIONS = new Set(["jpg", "jpeg", "png", "webp", "gif", "heic", "heif", "bmp"]);
@@ -92,19 +97,41 @@ function isImageAttachment(a: RawAttachment): boolean {
   return ext ? IMAGE_EXTENSIONS.has(ext) : false;
 }
 
-// Order photos come from native ClickUp file attachments on the order's
-// task. We only ever store the attachment ID, never a ClickUp attachment URL
-// — those can be short-lived, so /api/orders/photo re-fetches a fresh one at
-// the moment the browser actually requests the image.
+function orderPhotoFiles(fields: RawCustomField[] | undefined): RawAttachment[] {
+  const v = field(fields, ORDER_FIELDS.orderPhotos)?.value;
+  return Array.isArray(v) ? (v as RawAttachment[]).filter((a) => a?.id && isImageAttachment(a)) : [];
+}
+
+// Order photos come from the task's "Order Photos" files field — ops drops
+// images into it as the chamber moves through production and delivery.
+// Only file IDs go to the browser, never ClickUp file URLs: those can be
+// short-lived, so /api/orders/photo looks up a fresh one (getOrderPhoto)
+// at the moment the browser actually requests the image. The single-task
+// endpoint is used because it always returns the field's full file list.
 async function fetchPhotos(taskId: string): Promise<{ id: string; title: string }[]> {
   try {
-    const detail = await clickupGet<{ attachments?: RawAttachment[] }>(`/task/${taskId}`);
-    return (detail.attachments ?? [])
-      .filter(isImageAttachment)
-      .map((a) => ({ id: a.id, title: a.title ?? "Order photo" }));
+    const detail = await clickupGet<RawTask>(`/task/${taskId}`);
+    return orderPhotoFiles(detail.custom_fields).map((a) => ({ id: a.id, title: a.title ?? "Order photo" }));
   } catch {
     return []; // photos are a bonus — never let this break the lookup
   }
+}
+
+/**
+ * A fresh download URL for one Order Photos file. Returns null unless the
+ * task is on the Oxify orders list and the file is in its Order Photos
+ * field, so the photo route can't be used to read other ClickUp files.
+ */
+export async function getOrderPhoto(
+  taskId: string,
+  fileId: string
+): Promise<{ url: string; mimetype: string | null } | null> {
+  if (!ORDERS_LIST_ID) return null;
+  const task = await clickupGet<RawTask>(`/task/${encodeURIComponent(taskId)}`);
+  if (task.list?.id !== ORDERS_LIST_ID) return null;
+  const file = orderPhotoFiles(task.custom_fields).find((a) => a.id === fileId);
+  const url = file?.url ?? file?.url_w_host;
+  return url ? { url, mimetype: file?.mimetype ?? null } : null;
 }
 
 function sameName(a: string | undefined, b: string): boolean {
