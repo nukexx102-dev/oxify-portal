@@ -261,8 +261,16 @@ export default function Dashboard({ data, onReset }: Props) {
         </div>
       )}
 
-      {/* Order details — lets a customer confirm early that this is their
-          order. Collapsed by default. */}
+      {/* Hero */}
+      <section className="pb-1 pt-5 min-[720px]:pb-3 min-[720px]:pt-7">
+        <h1 className="mb-4 max-w-[15ch] text-balance text-[32px] font-semibold leading-[1.04] tracking-[-1px] text-ink min-[720px]:text-[52px] min-[720px]:tracking-[-2px]">
+          {copy.heroHeadline}
+        </h1>
+        <p className="max-w-[56ch] text-pretty text-[15px] font-light leading-[1.6] text-body min-[720px]:text-[17px]">{copy.heroSub}</p>
+      </section>
+
+      {/* Order details — right under the headline so a customer can confirm
+          early that this is their order. Collapsed by default. */}
       <section className={`${panel} mt-4 px-5 pb-5 pt-[22px] min-[720px]:px-[30px] min-[720px]:pb-[26px] min-[720px]:pt-7`}>
         <button
           type="button"
@@ -311,13 +319,8 @@ export default function Dashboard({ data, onReset }: Props) {
         )}
       </section>
 
-      {/* Hero */}
-      <section className="pb-[30px] pt-5 min-[720px]:pb-11 min-[720px]:pt-7">
-        <h1 className="mb-4 max-w-[15ch] text-balance text-[32px] font-semibold leading-[1.04] tracking-[-1px] text-ink min-[720px]:text-[52px] min-[720px]:tracking-[-2px]">
-          {copy.heroHeadline}
-        </h1>
-        <p className="max-w-[56ch] text-pretty text-[15px] font-light leading-[1.6] text-body min-[720px]:text-[17px]">{copy.heroSub}</p>
-      </section>
+      {/* Photos from the order's Order Photos field, under the details. */}
+      {photos.length > 0 && <PhotoCarousel photos={photos} />}
 
       <JourneyPanel currentStepIndex={currentStepIndex} />
 
@@ -400,8 +403,6 @@ export default function Dashboard({ data, onReset }: Props) {
         <EtaCard label="Arrives in the U.S." value={order.etaUs} />
         <EtaCard label="Arrives at your door" value={order.etaDoor} />
       </section>
-
-      {photos.length > 0 && <PhotoCarousel photos={photos} />}
 
       {/* Documents */}
       <section className={`${panel} mt-4 px-5 pb-6 pt-[22px] min-[720px]:px-[30px] min-[720px]:pb-[30px] min-[720px]:pt-7`}>
@@ -500,7 +501,7 @@ function JourneyPanel({ currentStepIndex }: { currentStepIndex: number }) {
   const nextLabel = currentStepIndex < last ? JOURNEY[currentStepIndex + 1].label : "Complete";
 
   return (
-    <section id="status" className={`${panel} scroll-mt-28 px-5 pb-5 pt-[22px] min-[720px]:px-[30px] min-[720px]:pb-[26px] min-[720px]:pt-7`}>
+    <section id="status" className={`${panel} mt-4 scroll-mt-28 px-5 pb-5 pt-[22px] min-[720px]:px-[30px] min-[720px]:pb-[26px] min-[720px]:pt-7`}>
       <div className="mb-[22px] flex items-baseline justify-between gap-5">
         <h2 className="text-[18px] font-medium tracking-[-0.3px] text-ink">Where your order is</h2>
         <span className="flex-none whitespace-nowrap text-[12px] font-medium text-muted tabular-nums">
