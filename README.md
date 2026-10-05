@@ -25,7 +25,7 @@ the portal. The names it reads are listed in `ORDER_FIELDS` in
 a lookup. The others fill the page when set:
 
 - `Chamber Model` → chamber name and spec line
-- `HBot Photo (model)` → the "Your model" showcase under the headline. A
+- `🖼️ HBOT Photo (Model)` → the "Your model" showcase under the headline. A
   Google Drive link to a photo of the model, shared as "Anyone with the link
   can view" (the server fetches the image from Drive). Hidden when empty or
   if the image can't load.

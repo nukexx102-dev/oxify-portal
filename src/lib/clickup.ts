@@ -41,7 +41,7 @@ const ORDER_FIELDS = {
   remainingBalance: "💰 Remaining Balance", // number
   remainingBalanceLink: "💰 Link - Remaining Balance", // url — "Pay Now" target
   orderPhotos: "Order Photos", // files — the "Your chamber" gallery
-  modelPhoto: "HBot Photo (model)", // url — Google Drive link to a photo of the model
+  modelPhoto: "🖼️ HBOT Photo (Model)", // url — Google Drive link to a photo of the model
 } as const;
 
 // Same shape as Morelli's "Portal Status Copy" list, so an Oxify copy of it
@@ -135,7 +135,6 @@ export async function getOrderPhoto(
   return url ? { url, mimetype: file?.mimetype ?? null } : null;
 }
 
-// Case- and spacing-insensitive, so "HBOT Photo (Model)" matches too.
 // The "HBot Photo (model)" field holds a Google Drive share link, which
 // points at Drive's viewer page rather than the image itself. This turns it
 // into URLs that return the image bytes — Drive's thumbnail endpoint first
@@ -173,9 +172,19 @@ export async function getModelPhotoSources(taskId: string): Promise<string[] | n
   return modelPhotoSource(textValue(task.custom_fields, ORDER_FIELDS.modelPhoto));
 }
 
+// Ignores emoji, capitals and extra spaces, so "🖼️ HBOT Photo (Model)",
+// "HBot Photo (model)" and "📖 User Manual" / "User Manual" all match —
+// ops can add, drop or swap a field's emoji without breaking the portal.
+function normalizeFieldName(v: string): string {
+  return v
+    .replace(/[\p{Extended_Pictographic}\p{Regional_Indicator}️‍]/gu, "")
+    .trim()
+    .replace(/\s+/g, " ")
+    .toLowerCase();
+}
+
 function sameName(a: string | undefined, b: string): boolean {
-  const norm = (v: string) => v.trim().replace(/\s+/g, " ").toLowerCase();
-  return norm(a ?? "") === norm(b);
+  return normalizeFieldName(a ?? "") === normalizeFieldName(b);
 }
 
 function field(fields: RawCustomField[] | undefined, name: string) {

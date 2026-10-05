@@ -711,17 +711,22 @@ function ModelShowcase({
           aria-hidden="true"
           className="pointer-events-none absolute bottom-[7%] left-1/2 h-[16%] w-[68%] -translate-x-1/2 rounded-[50%] bg-accent/20 blur-3xl"
         />
-        {/* eslint-disable-next-line @next/next/no-img-element -- dynamic same-origin proxy URL, not a static asset */}
-        <img
-          src={`/api/orders/model-photo?taskId=${encodeURIComponent(taskId)}`}
-          alt={`${name} hyperbaric chamber`}
-          onLoad={() => setStatus("loaded")}
-          onError={() => setStatus("failed")}
-          className={
-            "absolute inset-0 h-full w-full object-contain p-5 drop-shadow-[0_24px_40px_rgba(0,0,0,0.55)] transition-[opacity,transform] duration-700 ease-out min-[720px]:p-8 " +
-            (status === "loaded" ? "scale-100 opacity-100" : "scale-[1.02] opacity-0")
-          }
-        />
+        {/* The image keeps its own proportions and is framed as a rounded
+            card, so studio shots on a light background read as a photo
+            rather than a hard-edged white box on the dark stage. */}
+        <div className="absolute inset-0 flex items-center justify-center p-5 min-[720px]:p-8">
+          {/* eslint-disable-next-line @next/next/no-img-element -- dynamic same-origin proxy URL, not a static asset */}
+          <img
+            src={`/api/orders/model-photo?taskId=${encodeURIComponent(taskId)}`}
+            alt={`${name} hyperbaric chamber`}
+            onLoad={() => setStatus("loaded")}
+            onError={() => setStatus("failed")}
+            className={
+              "max-h-full max-w-full rounded-[18px] object-contain shadow-[0_0_0_1px_rgba(255,255,255,0.06),0_28px_60px_rgba(0,0,0,0.55),0_0_44px_rgba(205,181,132,0.12)] transition-[opacity,transform] duration-700 ease-out " +
+              (status === "loaded" ? "scale-100 opacity-100" : "scale-[1.02] opacity-0")
+            }
+          />
+        </div>
       </div>
 
       <div className="flex flex-col justify-center gap-4 px-5 pb-6 pt-5 min-[720px]:px-9 min-[720px]:py-10">
