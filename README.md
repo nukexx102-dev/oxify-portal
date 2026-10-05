@@ -14,8 +14,9 @@ ClickUp: **Oxify space › OXFY ORDER STATUS CRM** (filled by the Shopify →
 Zapier integration). The journey follows that list's statuses:
 
 ```
-order received → in production → ready to ship → in transit → delivery scheduled → delivered
-                                                     (exceptions: cancelled, refunded)
+order received / po sent/payment needed  (before production — no step lit yet)
+→ in production → ready to ship → in transit → customs clearance
+→ delivery scheduled → delivered          (exceptions: cancelled, refunded)
 ```
 
 Fields are matched **by name**, so renaming one in ClickUp hides it from

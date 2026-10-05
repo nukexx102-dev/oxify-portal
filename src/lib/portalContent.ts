@@ -42,7 +42,13 @@ export const JOURNEY = [
     status: "in transit",
     label: "In Transit",
     icon: "anchor",
-    tip: "Your chamber is on its way to the United States. Once it arrives, it's sorted and goes through customs clearance — basically a U.S. inspection. We don't have control over the package once it reaches U.S. customs.",
+    tip: "Your chamber is on its way to the United States.",
+  },
+  {
+    status: "customs clearance",
+    label: "Clearing Customs",
+    icon: "customs",
+    tip: "Once your chamber arrives in the United States, it's sorted and goes through customs clearance — basically a U.S. inspection. We don't have control over the package once it reaches U.S. customs.",
   },
   {
     status: "delivery scheduled",
@@ -62,12 +68,13 @@ export const JOURNEY = [
 // status should appear in exactly one phase.
 export const JOURNEY_PHASES = [
   { title: "Production", statuses: ["in production", "ready to ship"] },
-  { title: "Shipping & customs", statuses: ["in transit"] },
+  { title: "Shipping & customs", statuses: ["in transit", "customs clearance"] },
   { title: "Premium White Glove delivery", statuses: ["delivery scheduled", "delivered"] },
 ];
 
-// Before production starts — the rail shows no current step yet.
-export const PRE_PRODUCTION_STATUSES = new Set(["order received"]);
+// Before production starts — the rail shows no current step yet. Both
+// share the "order received" copy, as Morelli's Pre-Production row does.
+export const PRE_PRODUCTION_STATUSES = new Set(["order received", "po sent/payment needed"]);
 // Orders that ended another way — shown as a simple message, no rail.
 export const EXCEPTION_STATUSES = new Set(["cancelled", "refunded"]);
 
@@ -77,13 +84,16 @@ export type StatusCopy = { heroHeadline: string; heroSub: string; whatHappensNex
 // If CLICKUP_STATUS_COPY_LIST_ID is set, a matching row in that ClickUp list
 // overrides these (see getStatusCopy in clickup.ts). "{coord}" is replaced
 // with the order specialist's first name.
+const PRE_PRODUCTION_COPY: StatusCopy = {
+  heroHeadline: "Your order has been received",
+  heroSub: "Your order is in process.",
+  whatHappensNext:
+    "Your order is being confirmed by the factory as they finalize your configuration and get everything ready to begin production. This part usually moves quickly — once production begins, you'll see it reflected here automatically.",
+};
+
 export const STATUS_COPY: Record<string, StatusCopy> = {
-  "order received": {
-    heroHeadline: "Your order has been received",
-    heroSub: "Your order is in process.",
-    whatHappensNext:
-      "Your order is being confirmed by the factory as they finalize your configuration and get everything ready to begin production. This part usually moves quickly — once production begins, you'll see it reflected here automatically.",
-  },
+  "order received": PRE_PRODUCTION_COPY,
+  "po sent/payment needed": PRE_PRODUCTION_COPY,
   "in production": {
     heroHeadline: "Your chamber is in production",
     heroSub: "Our manufacturing team has started building your unit.",
@@ -100,7 +110,13 @@ export const STATUS_COPY: Record<string, StatusCopy> = {
     heroHeadline: "Your chamber is in transit",
     heroSub: "It's on its way to the United States.",
     whatHappensNext:
-      "Your chamber is currently in transit. Once it arrives in the U.S., it moves through customs clearance, which is handled entirely by our freight and customs team. Once it clears, we'll move it toward your Premium White Glove delivery.",
+      "Your chamber is currently in transit. Once it arrives in the U.S., it'll move into customs clearance. We'll update your status as soon as it lands.",
+  },
+  "customs clearance": {
+    heroHeadline: "Your chamber has arrived in the U.S. and is clearing customs",
+    heroSub: "It's currently being processed through U.S. customs.",
+    whatHappensNext:
+      "Your chamber has landed in the U.S. and is now going through customs clearance. This step is handled entirely by our freight and customs team. Once it clears, we'll move it toward your Premium White Glove delivery.",
   },
   "delivery scheduled": {
     heroHeadline: "Your Premium White Glove delivery is being scheduled",

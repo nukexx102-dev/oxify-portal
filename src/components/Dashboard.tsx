@@ -25,6 +25,7 @@ const ICONS = {
   serial: "M4 7V4h16v3M9 20h6M12 4v16",
   manual: "M4 19.5A2.5 2.5 0 016.5 17H20M4 19.5A2.5 2.5 0 016.5 22H20V2H6.5A2.5 2.5 0 004 4.5zM9 7h7M9 11h5",
   safety: "M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10zM12 8v4M12 16h.01",
+  customs: "M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10zM9 12l2 2 4-4",
   protocol: "M2 3h6a4 4 0 014 4v14a3 3 0 00-3-3H2zM22 3h-6a4 4 0 00-4 4v14a3 3 0 013-3h7z",
   electrical: "M13 2L3 14h9l-1 8 10-12h-9l1-8z",
   alert: "M10.29 3.86L1.82 18a2 2 0 001.71 3h16.94a2 2 0 001.71-3L13.71 3.86a2 2 0 00-3.42 0zM12 9v4M12 17h.01",
@@ -59,7 +60,7 @@ function Icon({ name, size = 20, strokeWidth = 1.6, className }: { name: IconNam
 // Statuses where an unpaid Initial Deposit balance is actually blocking
 // progress — production is done and it needs paying off before delivery.
 // Earlier statuses don't nag the customer yet.
-const BALANCE_DUE_STATUSES = new Set(["ready to ship", "in transit", "delivery scheduled"]);
+const BALANCE_DUE_STATUSES = new Set(["ready to ship", "in transit", "customs clearance", "delivery scheduled"]);
 
 const panel = "rounded-2xl border border-line bg-panel backdrop-blur-md";
 const eyebrow = "text-[10px] font-semibold uppercase tracking-[1.8px]";
