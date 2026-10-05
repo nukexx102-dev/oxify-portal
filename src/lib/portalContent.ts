@@ -144,22 +144,72 @@ export const STATUS_COPY: Record<string, StatusCopy> = {
   },
 };
 
-// Keyed by the ClickUp "Chamber Model" dropdown value. Models not listed here
-// (e.g. Macy Pan models sold through Oxify) still show their name, just
-// without the "Oxify" prefix or a spec line.
-export const PRODUCTS: Record<string, { name: string; spec: string }> = {
-  "Nova Duo": { name: "Oxify Nova Duo", spec: "Hard shell · 2.0 ATA · Sitting · 1–2 people" },
-  "Nova Duo Pro": { name: "Oxify Nova Duo Pro", spec: "Hard shell · 2.0 ATA · Sitting · 1–5 people" },
-  "Nova Quad": { name: "Oxify Nova Quad", spec: "Hard shell · 2.0 ATA · Sitting · 1–5 people" },
-  Club: { name: "Oxify Club", spec: "Hard shell · 2.0 ATA · Walk-in cabin · Up to 4 people" },
-  Forge: { name: "Oxify Forge", spec: "Hard shell · 2.0 ATA · Sitting · 1 person" },
-  "Luma Pro": { name: "Oxify Luma Pro", spec: "Hard shell · 2.0 ATA · Lying · 1 person" },
-  "Luma Standard": { name: "Oxify Luma Standard", spec: "Hard shell · 2.0 ATA · Lying · 1 person" },
-  "Flow Extended": { name: "Oxify Flow Extended", spec: "Soft shell · 1.5 ATA · Sitting · 1 person" },
-  Flow: { name: "Oxify Flow", spec: "Soft shell · 1.5 ATA · Sitting · 1 person" },
-  Sit: { name: "Oxify Sit", spec: "Soft shell · 1.5 ATA · Sitting · 1 person" },
-  "Sit Plus": { name: "Oxify Sit Plus", spec: "Soft shell · 1.4 ATA · Wheelchair accessible · 1 person" },
-  Rest: { name: "Oxify Rest", spec: "Soft shell · 1.5 ATA · Lying · 1 person" },
+// Keyed by the ClickUp "Chamber Model" dropdown value. `about` is a short
+// description condensed from the model's oxify.com product page, shown in
+// the "Your hyperbaric chamber" showcase. Models not listed here (e.g. Macy
+// Pan models sold through Oxify) still show their name, just without the
+// "Oxify" prefix, spec line or description.
+export const PRODUCTS: Record<string, { name: string; spec: string; about: string }> = {
+  "Nova Duo": {
+    name: "Oxify Nova Duo",
+    spec: "Hard shell · 2.0 ATA · Sitting · 1–2 people",
+    about: "A hard shell chamber built for two — slimmer than comparable two-person chambers, with an 87″ × 44″ interior, wide sliding glass doors and dual touchscreens inside and out.",
+  },
+  "Nova Duo Pro": {
+    name: "Oxify Nova Duo Pro",
+    spec: "Hard shell · 2.0 ATA · Sitting · 1–5 people",
+    about: "A hard shell chamber built for groups of up to five, with a spacious 82″ × 63″ interior, wide sliding doors and dual LCD screens inside and out.",
+  },
+  "Nova Quad": {
+    name: "Oxify Nova Quad",
+    spec: "Hard shell · 2.0 ATA · Sitting · 1–5 people",
+    about: "Oxify's highest-capacity hard shell chamber, built for five or more users at once in high-volume wellness, sports and medical settings.",
+  },
+  Club: {
+    name: "Oxify Club",
+    spec: "Hard shell · 2.0 ATA · Walk-in cabin · Up to 4 people",
+    about: "A first-class, seated walk-in cabin for up to four — clinical-grade oxygen at up to 2.0 ATA, in an interior made to relax, work or unwind in.",
+  },
+  Forge: {
+    name: "Oxify Forge",
+    spec: "Hard shell · 2.0 ATA · Sitting · 1 person",
+    about: "A premium hard shell chamber in stainless steel and brushed aluminum, with a reclining chair and large high-clarity windows for a bright, open session.",
+  },
+  "Luma Pro": {
+    name: "Oxify Luma Pro",
+    spec: "Hard shell · 2.0 ATA · Lying · 1 person",
+    about: "A bright, open hard shell chamber with room for an adult and a child, three large viewing windows, soft bedding and LCD panels inside and out.",
+  },
+  "Luma Standard": {
+    name: "Oxify Luma Standard",
+    spec: "Hard shell · 2.0 ATA · Lying · 1 person",
+    about: "A lie-down hard shell chamber in stainless steel and polycarbonate, with an automatic pressure-sealing door and an electric lift bed for easy entry.",
+  },
+  "Flow Extended": {
+    name: "Oxify Flow Extended",
+    spec: "Soft shell · 1.5 ATA · Sitting · 1 person",
+    about: "An upright soft shell chamber built for two, with a spacious 88″ interior and three large viewing windows for a bright, shareable session.",
+  },
+  Flow: {
+    name: "Oxify Flow",
+    spec: "Soft shell · 1.5 ATA · Sitting · 1 person",
+    about: "A compact, quiet seated soft shell chamber — just 67″ long — that fits smaller rooms, with a dual-zipper entry that makes every session effortless.",
+  },
+  Sit: {
+    name: "Oxify Sit",
+    spec: "Soft shell · 1.5 ATA · Sitting · 1 person",
+    about: "A seated soft shell chamber designed around easy access, with an L-shaped zippered entrance, a generous 63″ interior height and three windows.",
+  },
+  "Sit Plus": {
+    name: "Oxify Sit Plus",
+    spec: "Soft shell · 1.4 ATA · Wheelchair accessible · 1 person",
+    about: "Oxify's wheelchair-accessible chamber, with a wide 32″ × 52″ entry door and a roomy 5′3″ interior — simply roll in and go.",
+  },
+  Rest: {
+    name: "Oxify Rest",
+    spec: "Soft shell · 1.5 ATA · Lying · 1 person",
+    about: "A roomy lie-down soft shell chamber, 88″ long with seven windows, designed for full-body comfort at home or in a clinic.",
+  },
 };
 
 // Same document for every customer. Empty = "Coming soon" card.

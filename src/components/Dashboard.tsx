@@ -275,6 +275,7 @@ export default function Dashboard({ data, onReset }: Props) {
           taskId={order.taskId}
           name={chamberName || "Your chamber"}
           spec={product?.spec}
+          about={product?.about}
           configuration={order.configuration}
         />
       )}
@@ -683,20 +684,23 @@ function JourneyPanel({ currentStepIndex }: { currentStepIndex: number }) {
   );
 }
 
-// A showcase of the model the customer bought: the photo from the order's
-// "HBot Photo (model)" Drive link on a softly lit stage, beside the model
-// name, spec line and configuration. The image is streamed through
+// A showcase of the chamber the customer bought: the photo from the order's
+// "🖼️ HBOT Photo (Model)" Drive link on a softly lit stage (zooming in with
+// a gold glow on hover), beside the model name, spec line, a short
+// description and the configuration. The image is streamed through
 // /api/orders/model-photo; if it can't load (e.g. the Drive file isn't
 // shared publicly), the whole section quietly disappears.
 function ModelShowcase({
   taskId,
   name,
   spec,
+  about,
   configuration,
 }: {
   taskId: string;
   name: string;
   spec?: string;
+  about?: string;
   configuration: string[];
 }) {
   const [status, setStatus] = useState<"loading" | "loaded" | "failed">("loading");
@@ -704,12 +708,12 @@ function ModelShowcase({
 
   return (
     <section className={`${panel} mt-4 grid grid-cols-1 overflow-hidden min-[720px]:grid-cols-[1.3fr_1fr]`}>
-      <div className="relative aspect-[4/3] overflow-hidden bg-[radial-gradient(ellipse_at_50%_35%,#1f2738_0%,#0d1119_70%)] min-[720px]:aspect-auto min-[720px]:min-h-[360px]">
+      <div className="group/photo relative aspect-[4/3] overflow-hidden bg-[radial-gradient(ellipse_at_50%_35%,#1f2738_0%,#0d1119_70%)] min-[720px]:aspect-auto min-[720px]:min-h-[360px]">
         {status === "loading" && <div className="absolute inset-0 animate-pulse bg-white/[0.03]" aria-hidden="true" />}
         {/* Soft gold "floor" light under the chamber. */}
         <div
           aria-hidden="true"
-          className="pointer-events-none absolute bottom-[7%] left-1/2 h-[16%] w-[68%] -translate-x-1/2 rounded-[50%] bg-accent/20 blur-3xl"
+          className="pointer-events-none absolute bottom-[7%] left-1/2 h-[16%] w-[68%] -translate-x-1/2 rounded-[50%] bg-accent/20 blur-3xl transition-colors duration-500 group-hover/photo:bg-accent/40"
         />
         {/* The image keeps its own proportions and is framed as a rounded
             card, so studio shots on a light background read as a photo
@@ -722,7 +726,7 @@ function ModelShowcase({
             onLoad={() => setStatus("loaded")}
             onError={() => setStatus("failed")}
             className={
-              "max-h-full max-w-full rounded-[18px] object-contain shadow-[0_0_0_1px_rgba(255,255,255,0.06),0_28px_60px_rgba(0,0,0,0.55),0_0_44px_rgba(205,181,132,0.12)] transition-[opacity,transform] duration-700 ease-out " +
+              "max-h-full max-w-full rounded-[18px] object-contain shadow-[0_0_0_1px_rgba(255,255,255,0.06),0_28px_60px_rgba(0,0,0,0.55),0_0_44px_rgba(205,181,132,0.12)] transition-[opacity,scale,box-shadow] duration-500 ease-out group-hover/photo:scale-[1.07] group-hover/photo:shadow-[0_0_0_1px_rgba(205,181,132,0.75),0_28px_60px_rgba(0,0,0,0.55),0_0_32px_rgba(205,181,132,0.55),0_0_90px_rgba(205,181,132,0.3)] " +
               (status === "loaded" ? "scale-100 opacity-100" : "scale-[1.02] opacity-0")
             }
           />
@@ -730,7 +734,7 @@ function ModelShowcase({
       </div>
 
       <div className="flex flex-col justify-center gap-4 px-5 pb-6 pt-5 min-[720px]:px-9 min-[720px]:py-10">
-        <span className={`${eyebrow} text-accent`}>Your model</span>
+        <span className={`${eyebrow} text-accent`}>Your hyperbaric chamber</span>
         <div className="flex flex-col gap-2">
           <h2 className="text-balance text-[28px] font-semibold leading-[1.08] tracking-[-0.8px] text-ink min-[720px]:text-[34px] min-[720px]:tracking-[-1.2px]">
             {name}
@@ -749,7 +753,7 @@ function ModelShowcase({
             ))}
           </ul>
         )}
-        <p className="text-[12px] leading-[1.5] text-muted">The model you purchased, shown for reference.</p>
+        {about && <p className="text-pretty text-[13.5px] font-light leading-[1.65] text-body">{about}</p>}
       </div>
     </section>
   );
