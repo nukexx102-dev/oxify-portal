@@ -144,7 +144,9 @@ export const STATUS_COPY: Record<string, StatusCopy> = {
   },
 };
 
-// Keyed by the ClickUp "Chamber Model" dropdown value. `about` is the short
+// Keyed by the ClickUp "Chamber Model" dropdown value. Every Oxify soft
+// chamber ships in its Pro (top) configuration — there's no standard
+// version — so soft chamber names carry "Pro". `about` is the short
 // description in the "Your hyperbaric chamber" showcase, in Oxify's voice
 // ("Overcome anything. Achieve everything."). Keep it to how the chamber
 // feels and who it's for — no materials, measurements, numbers or
@@ -189,27 +191,27 @@ export const PRODUCTS: Record<string, { name: string; spec: string; about: strin
     about: "Stretch out and switch off. An easy-entry bed makes every session simple — all that's left is to rest and reset.",
   },
   "Flow Extended": {
-    name: "Oxify Flow Extended",
+    name: "Oxify Flow Extended Pro",
     spec: "Soft shell · 1.5 ATA · Sitting · 1 person",
     about: "Room for two, upright and open. Share the session or claim the space — either way, you step out ready for what's next.",
   },
   Flow: {
-    name: "Oxify Flow",
+    name: "Oxify Flow Pro",
     spec: "Soft shell · 1.5 ATA · Sitting · 1 person",
     about: "Compact enough for any room, ready whenever you are. Zip in, sit back, and make every session part of your routine.",
   },
   Sit: {
-    name: "Oxify Sit",
+    name: "Oxify Sit Pro",
     spec: "Soft shell · 1.5 ATA · Sitting · 1 person",
     about: "Easy in, easy reset. Step in, settle into an upright seat, and give yourself the session you've earned.",
   },
   "Sit Plus": {
-    name: "Oxify Sit Plus",
+    name: "Oxify Sit Plus Pro",
     spec: "Soft shell · 1.4 ATA · Wheelchair accessible · 1 person",
     about: "No barriers. A wide, wheelchair-accessible entry means you simply roll in and go — because everyone deserves to achieve everything.",
   },
   Rest: {
-    name: "Oxify Rest",
+    name: "Oxify Rest Pro",
     spec: "Soft shell · 1.5 ATA · Lying · 1 person",
     about: "Stretch out from head to toe. A roomy lie-down chamber with plenty of windows, made for full-body rest at home or in a clinic.",
   },
