@@ -482,10 +482,9 @@ function ContactButtons({ coordFirst }: { coordFirst: string | null }) {
   );
 }
 
-// "Where your order is" — one milestone per journey status. Desktop: a
-// horizontal rail with hover tooltips, then the Now/Next row. Mobile: the
-// Now/Next row first, then a vertical rail; tapping a milestone pins its
-// tooltip open. "View the full journey" lists every step grouped by phase;
+// "Where your order is" — the Now/Next row, then one milestone per journey
+// status: a horizontal rail with hover tooltips on desktop, a vertical rail
+// on mobile, where tapping a milestone pins its tooltip open. "View the full journey" lists every step grouped by phase;
 // hovering (or tapping) a step's icon shows its description.
 function JourneyPanel({ currentStepIndex }: { currentStepIndex: number }) {
   const [hovered, setHovered] = useState<number | null>(null);
@@ -511,7 +510,7 @@ function JourneyPanel({ currentStepIndex }: { currentStepIndex: number }) {
 
       <div className="flex flex-col">
         {/* Now / Next */}
-        <div className="order-1 flex flex-col items-start gap-4 border-b border-divider pb-5 min-[720px]:order-2 min-[720px]:flex-row min-[720px]:items-baseline min-[720px]:justify-between min-[720px]:gap-5 min-[720px]:border-t min-[720px]:pb-[22px] min-[720px]:pt-5">
+        <div className="flex flex-col items-start gap-4 border-b border-divider pb-5 min-[720px]:flex-row min-[720px]:items-baseline min-[720px]:justify-between min-[720px]:gap-5 min-[720px]:pb-[22px]">
           <div className="flex flex-col gap-1.5">
             <span className={`${eyebrow} text-accent`}>Now</span>
             <span className="text-[17px] font-semibold tracking-[-0.3px] text-ink">{nowLabel}</span>
@@ -523,7 +522,7 @@ function JourneyPanel({ currentStepIndex }: { currentStepIndex: number }) {
         </div>
 
         {/* Milestone rail */}
-        <ol className="order-2 flex flex-col pb-4 pt-[18px] min-[720px]:order-1 min-[720px]:flex-row min-[720px]:items-start min-[720px]:pb-6 min-[720px]:pt-1.5">
+        <ol className="flex flex-col border-b border-divider pb-4 pt-[18px] min-[720px]:flex-row min-[720px]:items-start min-[720px]:pb-6 min-[720px]:pt-7">
           {JOURNEY.map((step, i) => {
             const done = currentStepIndex > i;
             const current = currentStepIndex === i;
