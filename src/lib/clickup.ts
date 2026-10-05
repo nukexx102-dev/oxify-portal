@@ -41,6 +41,7 @@ const ORDER_FIELDS = {
   remainingBalance: "💰 Remaining Balance", // number
   remainingBalanceLink: "💰 Link - Remaining Balance", // url — "Pay Now" target
   orderPhotos: "Order Photos", // files — the "Your chamber" gallery
+  modelPhoto: "HBot Photo (model)", // url — Google Drive link to a photo of the model
 } as const;
 
 // Same shape as Morelli's "Portal Status Copy" list, so an Oxify copy of it
@@ -134,8 +135,47 @@ export async function getOrderPhoto(
   return url ? { url, mimetype: file?.mimetype ?? null } : null;
 }
 
+// Case- and spacing-insensitive, so "HBOT Photo (Model)" matches too.
+// The "HBot Photo (model)" field holds a Google Drive share link, which
+// points at Drive's viewer page rather than the image itself. This turns it
+// into URLs that return the image bytes — Drive's thumbnail endpoint first
+// (fast, sized for the web), then the raw download as a fallback. A non-Drive
+// https link is used as-is. The file must be shared "Anyone with the link".
+function modelPhotoSource(link: string): string[] | null {
+  const v = link.trim();
+  if (!/^https:\/\//i.test(v)) return null;
+  let url: URL;
+  try {
+    url = new URL(v);
+  } catch {
+    return null;
+  }
+  if (/(^|\.)drive\.google\.com$|(^|\.)docs\.google\.com$/i.test(url.hostname)) {
+    const id = url.pathname.match(/\/d\/([\w-]{10,})/)?.[1] ?? url.searchParams.get("id");
+    if (!id || !/^[\w-]{10,}$/.test(id)) return null;
+    return [
+      `https://drive.google.com/thumbnail?id=${id}&sz=w1600`,
+      `https://drive.google.com/uc?export=download&id=${id}`,
+    ];
+  }
+  return [url.toString()];
+}
+
+/**
+ * Image-byte URLs for an order's model photo, or null. Only reads the link
+ * stored on a task in the Oxify orders list, so the model-photo route can't
+ * be used to fetch arbitrary URLs.
+ */
+export async function getModelPhotoSources(taskId: string): Promise<string[] | null> {
+  if (!ORDERS_LIST_ID) return null;
+  const task = await clickupGet<RawTask>(`/task/${encodeURIComponent(taskId)}`);
+  if (task.list?.id !== ORDERS_LIST_ID) return null;
+  return modelPhotoSource(textValue(task.custom_fields, ORDER_FIELDS.modelPhoto));
+}
+
 function sameName(a: string | undefined, b: string): boolean {
-  return (a ?? "").trim().toLowerCase() === b.trim().toLowerCase();
+  const norm = (v: string) => v.trim().replace(/\s+/g, " ").toLowerCase();
+  return norm(a ?? "") === norm(b);
 }
 
 function field(fields: RawCustomField[] | undefined, name: string) {
@@ -275,6 +315,7 @@ export type OrderDetails = {
   remainingBalance: number | null;
   remainingBalanceLink: string | null;
   photos: { id: string; title: string }[];
+  hasModelPhoto: boolean; // served by /api/orders/model-photo
 };
 
 async function orderNumberFieldId(listId: string): Promise<string> {
@@ -342,6 +383,7 @@ export async function lookupOrder(orderNumber: string, email: string): Promise<O
     remainingBalance: numberValue(fields, ORDER_FIELDS.remainingBalance),
     remainingBalanceLink: textValue(fields, ORDER_FIELDS.remainingBalanceLink) || null,
     photos: await fetchPhotos(task.id),
+    hasModelPhoto: Boolean(modelPhotoSource(textValue(fields, ORDER_FIELDS.modelPhoto))),
   };
 }
 

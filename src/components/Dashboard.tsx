@@ -270,6 +270,15 @@ export default function Dashboard({ data, onReset }: Props) {
         <p className="max-w-[56ch] text-pretty text-[15px] font-light leading-[1.6] text-body min-[720px]:text-[17px]">{copy.heroSub}</p>
       </section>
 
+      {order.hasModelPhoto && (
+        <ModelShowcase
+          taskId={order.taskId}
+          name={chamberName || "Your chamber"}
+          spec={product?.spec}
+          configuration={order.configuration}
+        />
+      )}
+
       {/* Order details — right under the headline so a customer can confirm
           early that this is their order. Collapsed by default. */}
       <section className={`${panel} mt-4 px-5 pb-5 pt-[22px] min-[720px]:px-[30px] min-[720px]:pb-[26px] min-[720px]:pt-7`}>
@@ -670,6 +679,73 @@ function JourneyPanel({ currentStepIndex }: { currentStepIndex: number }) {
           ))}
         </div>
       )}
+    </section>
+  );
+}
+
+// A showcase of the model the customer bought: the photo from the order's
+// "HBot Photo (model)" Drive link on a softly lit stage, beside the model
+// name, spec line and configuration. The image is streamed through
+// /api/orders/model-photo; if it can't load (e.g. the Drive file isn't
+// shared publicly), the whole section quietly disappears.
+function ModelShowcase({
+  taskId,
+  name,
+  spec,
+  configuration,
+}: {
+  taskId: string;
+  name: string;
+  spec?: string;
+  configuration: string[];
+}) {
+  const [status, setStatus] = useState<"loading" | "loaded" | "failed">("loading");
+  if (status === "failed") return null;
+
+  return (
+    <section className={`${panel} mt-4 grid grid-cols-1 overflow-hidden min-[720px]:grid-cols-[1.3fr_1fr]`}>
+      <div className="relative aspect-[4/3] overflow-hidden bg-[radial-gradient(ellipse_at_50%_35%,#1f2738_0%,#0d1119_70%)] min-[720px]:aspect-auto min-[720px]:min-h-[360px]">
+        {status === "loading" && <div className="absolute inset-0 animate-pulse bg-white/[0.03]" aria-hidden="true" />}
+        {/* Soft gold "floor" light under the chamber. */}
+        <div
+          aria-hidden="true"
+          className="pointer-events-none absolute bottom-[7%] left-1/2 h-[16%] w-[68%] -translate-x-1/2 rounded-[50%] bg-accent/20 blur-3xl"
+        />
+        {/* eslint-disable-next-line @next/next/no-img-element -- dynamic same-origin proxy URL, not a static asset */}
+        <img
+          src={`/api/orders/model-photo?taskId=${encodeURIComponent(taskId)}`}
+          alt={`${name} hyperbaric chamber`}
+          onLoad={() => setStatus("loaded")}
+          onError={() => setStatus("failed")}
+          className={
+            "absolute inset-0 h-full w-full object-contain p-5 drop-shadow-[0_24px_40px_rgba(0,0,0,0.55)] transition-[opacity,transform] duration-700 ease-out min-[720px]:p-8 " +
+            (status === "loaded" ? "scale-100 opacity-100" : "scale-[1.02] opacity-0")
+          }
+        />
+      </div>
+
+      <div className="flex flex-col justify-center gap-4 px-5 pb-6 pt-5 min-[720px]:px-9 min-[720px]:py-10">
+        <span className={`${eyebrow} text-accent`}>Your model</span>
+        <div className="flex flex-col gap-2">
+          <h2 className="text-balance text-[28px] font-semibold leading-[1.08] tracking-[-0.8px] text-ink min-[720px]:text-[34px] min-[720px]:tracking-[-1.2px]">
+            {name}
+          </h2>
+          {spec && <p className="text-[14px] font-light leading-[1.6] text-body">{spec}</p>}
+        </div>
+        {configuration.length > 0 && (
+          <ul className="flex flex-wrap gap-2 border-t border-divider pt-4" aria-label="Configuration">
+            {configuration.map((item) => (
+              <li
+                key={item}
+                className="rounded-full border border-accent/30 bg-accent/6 px-3 py-[5px] text-[12px] font-medium text-ink"
+              >
+                {item}
+              </li>
+            ))}
+          </ul>
+        )}
+        <p className="text-[12px] leading-[1.5] text-muted">The model you purchased, shown for reference.</p>
+      </div>
     </section>
   );
 }
