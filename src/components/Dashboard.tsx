@@ -485,12 +485,15 @@ function ContactButtons({ coordFirst }: { coordFirst: string | null }) {
 // "Where your order is" — one milestone per journey status. Desktop: a
 // horizontal rail with hover tooltips, then the Now/Next row. Mobile: the
 // Now/Next row first, then a vertical rail; tapping a milestone pins its
-// tooltip open. "View the full journey" expands every step, grouped by
-// phase, with its full description.
+// tooltip open. "View the full journey" lists every step grouped by phase;
+// hovering (or tapping) a step's icon shows its description.
 function JourneyPanel({ currentStepIndex }: { currentStepIndex: number }) {
   const [hovered, setHovered] = useState<number | null>(null);
   const [pinned, setPinned] = useState<number | null>(null);
   const [journeyOpen, setJourneyOpen] = useState(false);
+  // Same hover/pin pattern for the full-journey list's icons, keyed by status.
+  const [listHovered, setListHovered] = useState<string | null>(null);
+  const [listPinned, setListPinned] = useState<string | null>(null);
   const total = JOURNEY.length;
   const last = total - 1;
 
@@ -627,32 +630,55 @@ function JourneyPanel({ currentStepIndex }: { currentStepIndex: number }) {
                 const step = JOURNEY[i];
                 const done = currentStepIndex > i;
                 const current = currentStepIndex === i;
+                const tipOpen = listHovered === status || listPinned === status;
                 return (
                   <div
                     key={status}
                     className={
-                      "flex items-start gap-3 rounded-[10px] px-2.5 py-[9px] transition-[background-color,box-shadow] duration-200 hover:bg-accent/8 hover:shadow-[inset_0_0_0_1px_rgba(205,181,132,.4),0_0_20px_rgba(205,181,132,.2)] " +
+                      "flex items-center gap-3 rounded-[10px] px-2.5 py-[9px] transition-[background-color,box-shadow] duration-200 hover:bg-accent/8 hover:shadow-[inset_0_0_0_1px_rgba(205,181,132,.4),0_0_20px_rgba(205,181,132,.2)] " +
                       (current ? "bg-accent/6 shadow-[inset_0_0_0_1px_rgba(205,181,132,.25)]" : "")
                     }
                   >
+                    {/* The step's description shows only while its icon is
+                        hovered or focused; a tap pins it open on touch. */}
                     <span
-                      className={
-                        "grid h-[34px] w-[34px] flex-none place-items-center rounded-[10px] border transition-all duration-200 " +
-                        (current
-                          ? "border-accent bg-accent/14 text-accent shadow-[0_0_16px_rgba(205,181,132,.4)]"
-                          : done
-                            ? "border-accent/35 bg-tile text-accent"
-                            : "border-line-strong bg-tile text-muted")
-                      }
+                      className={"relative flex-none " + (tipOpen ? "z-20" : "z-[1]")}
+                      onMouseEnter={() => setListHovered(status)}
+                      onMouseLeave={() => setListHovered((h) => (h === status ? null : h))}
                     >
-                      <Icon name={step.icon} size={16} />
-                    </span>
-                    <span className="flex min-w-0 flex-col gap-1 pt-[7px]">
-                      <span className={"text-[13.5px] leading-[1.3] " + (current ? "font-semibold text-accent" : done ? "text-ink" : "text-muted")}>
-                        {step.label}
-                        {current && <span className="ml-2 text-[9.5px] font-semibold uppercase tracking-[1.2px]">Current</span>}
+                      <button
+                        type="button"
+                        aria-label={`${step.label}: ${step.tip}`}
+                        aria-expanded={tipOpen}
+                        onClick={() => setListPinned((p) => (p === status ? null : status))}
+                        onFocus={() => setListHovered(status)}
+                        onBlur={() => setListHovered((h) => (h === status ? null : h))}
+                        className={
+                          "grid h-[34px] w-[34px] cursor-pointer place-items-center rounded-[10px] border transition-all duration-200 " +
+                          (tipOpen
+                            ? "border-accent bg-accent/14 text-accent shadow-[0_0_0_4px_rgba(205,181,132,.12),0_0_18px_rgba(205,181,132,.5)]"
+                            : current
+                              ? "border-accent bg-accent/14 text-accent shadow-[0_0_16px_rgba(205,181,132,.4)]"
+                              : done
+                                ? "border-accent/35 bg-tile text-accent"
+                                : "border-line-strong bg-tile text-muted")
+                        }
+                      >
+                        <Icon name={step.icon} size={16} />
+                      </button>
+                      <span
+                        role="tooltip"
+                        className={
+                          "pointer-events-none absolute bottom-[calc(100%+10px)] left-0 w-[260px] max-w-[calc(100vw-56px)] rounded-xl border border-accent/35 bg-tile px-4 pb-[15px] pt-3.5 text-[12.5px] leading-[1.55] text-body shadow-[0_18px_40px_rgba(0,0,0,.55),0_0_24px_rgba(205,181,132,.12)] transition-[opacity,translate] duration-200 " +
+                          (tipOpen ? "translate-y-0 opacity-100" : "translate-y-1.5 opacity-0")
+                        }
+                      >
+                        {step.tip}
                       </span>
-                      <span className="text-[12px] font-light leading-[1.55] text-body">{step.tip}</span>
+                    </span>
+                    <span className={"text-[13.5px] leading-[1.3] " + (current ? "font-semibold text-accent" : done ? "text-ink" : "text-muted")}>
+                      {step.label}
+                      {current && <span className="ml-2 text-[9.5px] font-semibold uppercase tracking-[1.2px]">Current</span>}
                     </span>
                   </div>
                 );
