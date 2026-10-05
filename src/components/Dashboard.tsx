@@ -123,6 +123,7 @@ export default function Dashboard({ data, onReset }: Props) {
   const detailRows: { icon: IconName; label: string; value: string; note?: string; muted?: boolean; href?: string }[] = [
     { icon: "chamber", label: "Chamber", value: chamberName || "—", note: product?.spec },
   ];
+  if (order.chamberColor) detailRows.push({ icon: "chamber", label: "Color", value: order.chamberColor });
   if (order.configuration.length > 0) {
     detailRows.push({ icon: "config", label: "Configuration", value: order.configuration.join(" · ") });
   }
@@ -276,6 +277,7 @@ export default function Dashboard({ data, onReset }: Props) {
           name={chamberName || "Your chamber"}
           spec={product?.spec}
           about={product?.about}
+          color={order.chamberColor}
           configuration={order.configuration}
         />
       )}
@@ -695,12 +697,14 @@ function ModelShowcase({
   name,
   spec,
   about,
+  color,
   configuration,
 }: {
   taskId: string;
   name: string;
   spec?: string;
   about?: string;
+  color: string | null;
   configuration: string[];
 }) {
   const [status, setStatus] = useState<"loading" | "loaded" | "failed">("loading");
@@ -740,6 +744,11 @@ function ModelShowcase({
             {name}
           </h2>
           {spec && <p className="text-[14px] font-light leading-[1.6] text-body">{spec}</p>}
+          {color && (
+            <p className="text-[13px] text-muted">
+              Color <span className="ml-1 font-medium text-ink">{color}</span>
+            </p>
+          )}
         </div>
         {configuration.length > 0 && (
           <ul className="flex flex-wrap gap-2 border-t border-divider pt-4" aria-label="Configuration">

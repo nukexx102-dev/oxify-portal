@@ -20,6 +20,9 @@ const CLICKUP_API_BASE = "https://api.clickup.com/api/v2";
 const ORDERS_LIST_ID = process.env.CLICKUP_ORDERS_LIST_ID ?? "";
 // Optional — when unset, all customer-facing copy comes from STATUS_COPY.
 const STATUS_COPY_LIST_ID = process.env.CLICKUP_STATUS_COPY_LIST_ID ?? "";
+// Optional — the "Oxify Chamber Photos" library (one row per model + color).
+// When unset, only an order's own HBOT Photo link is used.
+const CHAMBER_PHOTOS_LIST_ID = process.env.CLICKUP_CHAMBER_PHOTOS_LIST_ID ?? "";
 
 const ORDER_FIELDS = {
   orderNumber: "Order Number", // short text — Shopify order name, e.g. "OXFY1020"
@@ -41,7 +44,8 @@ const ORDER_FIELDS = {
   remainingBalance: "💰 Remaining Balance", // number
   remainingBalanceLink: "💰 Link - Remaining Balance", // url — "Pay Now" target
   orderPhotos: "Order Photos", // files — the "Your chamber" gallery
-  modelPhoto: "🖼️ HBOT Photo (Model)", // url — Google Drive link to a photo of the model
+  modelPhoto: "🖼️ HBOT Photo (Model)", // url — per-order photo; overrides the library (custom colors)
+  chamberColor: "Chamber Color", // dropdown — exterior color, filled by Zapier from Shopify
 } as const;
 
 // Same shape as Morelli's "Portal Status Copy" list, so an Oxify copy of it
@@ -160,16 +164,82 @@ function modelPhotoSource(link: string): string[] | null {
   return [url.toString()];
 }
 
+// Fields on the "Oxify Chamber Photos" library list.
+const LIBRARY_FIELDS = {
+  model: "Chamber Model", // dropdown or text — same model names as the CRM
+  color: "Chamber Color", // dropdown or text — same color names as the CRM
+  photo: "Photo", // url — Google Drive link
+} as const;
+
+// Loose matching for model and color names, so "Oxify Original (Black)",
+// "oxify original", "Aqua Marine"/"Aquamarine" and "Oxify Nova Duo Pro"/
+// "Nova Duo Pro" all line up. Note "Nova Duo" ≠ "Nova Duo Pro".
+function normalizeChoice(v: string): string {
+  return v.toLowerCase().replace(/\(.*?\)/g, "").replace(/[^a-z0-9]/g, "");
+}
+function normalizeModel(v: string): string {
+  return normalizeChoice(v).replace(/^oxify(?=.)/, "");
+}
+
+type LibraryRow = { model: string; color: string; photo: string };
+let libraryCache: { at: number; rows: LibraryRow[] } | null = null;
+
+// The whole library is small (one row per model + color), so it's read in
+// full and kept for a minute — photo edits in ClickUp show up within ~60s.
+async function libraryRows(): Promise<LibraryRow[]> {
+  if (!CHAMBER_PHOTOS_LIST_ID) return [];
+  if (libraryCache && Date.now() - libraryCache.at < 60_000) return libraryCache.rows;
+  const rows: LibraryRow[] = [];
+  for (let page = 0; page < 10; page++) {
+    const data = await clickupGet<{ tasks?: RawTask[]; last_page?: boolean }>(
+      `/list/${CHAMBER_PHOTOS_LIST_ID}/task?include_closed=true&page=${page}`
+    );
+    for (const t of data.tasks ?? []) {
+      rows.push({
+        model: choiceOrText(t.custom_fields, LIBRARY_FIELDS.model),
+        color: choiceOrText(t.custom_fields, LIBRARY_FIELDS.color),
+        photo: textValue(t.custom_fields, LIBRARY_FIELDS.photo),
+      });
+    }
+    if (data.last_page !== false || (data.tasks ?? []).length === 0) break;
+  }
+  libraryCache = { at: Date.now(), rows };
+  return rows;
+}
+
 /**
- * Image-byte URLs for an order's model photo, or null. Only reads the link
- * stored on a task in the Oxify orders list, so the model-photo route can't
- * be used to fetch arbitrary URLs.
+ * The photo link to show for an order: its own "🖼️ HBOT Photo (Model)" link
+ * if set (custom colors), otherwise the library photo for its model + color,
+ * otherwise "". Never a photo of a different color.
+ */
+async function resolveModelPhotoLink(fields: RawCustomField[] | undefined): Promise<string> {
+  const own = textValue(fields, ORDER_FIELDS.modelPhoto);
+  if (modelPhotoSource(own)) return own;
+
+  const model = normalizeModel(choiceOrText(fields, ORDER_FIELDS.chamberModel));
+  const color = normalizeChoice(choiceOrText(fields, ORDER_FIELDS.chamberColor));
+  if (!model || !color) return "";
+  try {
+    const row = (await libraryRows()).find(
+      (r) => normalizeModel(r.model) === model && normalizeChoice(r.color) === color && modelPhotoSource(r.photo)
+    );
+    return row?.photo ?? "";
+  } catch (err) {
+    console.error("[chamber photos] library unavailable", err);
+    return ""; // the photo is a bonus — never let this break the lookup
+  }
+}
+
+/**
+ * Image-byte URLs for an order's model photo, or null. Only resolves the
+ * link for a task in the Oxify orders list (its own link or its library
+ * match), so the model-photo route can't be used to fetch arbitrary URLs.
  */
 export async function getModelPhotoSources(taskId: string): Promise<string[] | null> {
   if (!ORDERS_LIST_ID) return null;
   const task = await clickupGet<RawTask>(`/task/${encodeURIComponent(taskId)}`);
   if (task.list?.id !== ORDERS_LIST_ID) return null;
-  return modelPhotoSource(textValue(task.custom_fields, ORDER_FIELDS.modelPhoto));
+  return modelPhotoSource(await resolveModelPhotoLink(task.custom_fields));
 }
 
 // Ignores emoji, capitals and extra spaces, so "🖼️ HBOT Photo (Model)",
@@ -194,6 +264,11 @@ function field(fields: RawCustomField[] | undefined, name: string) {
 function textValue(fields: RawCustomField[] | undefined, name: string): string {
   const v = field(fields, name)?.value;
   return v == null ? "" : String(v).trim();
+}
+
+// A dropdown's option name, or the field's text when it's a text field.
+function choiceOrText(fields: RawCustomField[] | undefined, name: string): string {
+  return typeof field(fields, name)?.value === "number" ? dropdownValue(fields, name) : textValue(fields, name);
 }
 
 function dropdownValue(fields: RawCustomField[] | undefined, name: string): string {
@@ -325,6 +400,7 @@ export type OrderDetails = {
   remainingBalanceLink: string | null;
   photos: { id: string; title: string }[];
   hasModelPhoto: boolean; // served by /api/orders/model-photo
+  chamberColor: string | null; // exterior color, e.g. "Tuxedo"
 };
 
 async function orderNumberFieldId(listId: string): Promise<string> {
@@ -392,7 +468,8 @@ export async function lookupOrder(orderNumber: string, email: string): Promise<O
     remainingBalance: numberValue(fields, ORDER_FIELDS.remainingBalance),
     remainingBalanceLink: textValue(fields, ORDER_FIELDS.remainingBalanceLink) || null,
     photos: await fetchPhotos(task.id),
-    hasModelPhoto: Boolean(modelPhotoSource(textValue(fields, ORDER_FIELDS.modelPhoto))),
+    hasModelPhoto: Boolean(modelPhotoSource(await resolveModelPhotoLink(fields))),
+    chamberColor: choiceOrText(fields, ORDER_FIELDS.chamberColor) || null,
   };
 }
 

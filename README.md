@@ -25,10 +25,13 @@ the portal. The names it reads are listed in `ORDER_FIELDS` in
 a lookup. The others fill the page when set:
 
 - `Chamber Model` → chamber name and spec line
-- `🖼️ HBOT Photo (Model)` → the "Your model" showcase under the headline. A
-  Google Drive link to a photo of the model, shared as "Anyone with the link
-  can view" (the server fetches the image from Drive). Hidden when empty or
-  if the image can't load.
+- `Chamber Color` → shown in the showcase and Order Details, and used to
+  pick the photo. The photo shown is, in order: the order's own
+  `🖼️ HBOT Photo (Model)` link (use for custom colors), else the row for its
+  model + color in the optional **Oxify Chamber Photos** list
+  (`CLICKUP_CHAMBER_PHOTOS_LIST_ID`; fields `Chamber Model`, `Chamber Color`,
+  `Photo`), else no photo — never a different color. Photos are Google Drive
+  links shared as "Anyone with the link can view".
 - `🔧 Configuration` → configuration row. "Water Chiller AC" adds the
   "ships separately" note.
 - `Tracking Link`, `Delivery Window`, `📦 Package Count`,
