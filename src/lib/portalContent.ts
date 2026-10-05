@@ -8,7 +8,7 @@ export const CONTACT = {
   phoneDisplay: "(888) 844-9249",
   phoneTel: "+18888449249",
   hours: "Mon–Sun, 9AM–5PM EST",
-  tagline: "Recovery, Refined.",
+  tagline: "Overcome anything. Achieve everything.",
   portalUrl: "portal.oxify.com",
 };
 
@@ -126,7 +126,7 @@ export const STATUS_COPY: Record<string, StatusCopy> = {
   },
   delivered: {
     heroHeadline: "You're all set!",
-    heroSub: "Your chamber is delivered, installed, and ready for you.",
+    heroSub: "Your chamber is installed and ready. Overcome anything. Achieve everything.",
     whatHappensNext:
       "Your chamber has been delivered and installed, and your training is complete. You're ready to begin using your chamber. If you have any questions along the way, {coord} is just a message or call away.",
   },
@@ -145,8 +145,9 @@ export const STATUS_COPY: Record<string, StatusCopy> = {
 };
 
 // Keyed by the ClickUp "Chamber Model" dropdown value. `about` is the short
-// description in the "Your hyperbaric chamber" showcase. Keep it to how the
-// chamber feels and who it's for — no materials, measurements, numbers or
+// description in the "Your hyperbaric chamber" showcase, in Oxify's voice
+// ("Overcome anything. Achieve everything."). Keep it to how the chamber
+// feels and who it's for — no materials, measurements, numbers or
 // health claims (the spec line above it already covers the facts, and
 // builds can differ from the website). Models not listed here (e.g. Macy Pan
 // models sold through Oxify) still show their name, just without the
@@ -155,62 +156,62 @@ export const PRODUCTS: Record<string, { name: string; spec: string; about: strin
   "Nova Duo": {
     name: "Oxify Nova Duo",
     spec: "Hard shell · 2.0 ATA · Sitting · 1–2 people",
-    about: "Built for two, so you can share sessions with a partner or family member — or spread out and recline on your own.",
+    about: "Built for two. Share every session with the person who pushes you — or take the space to stretch out and reset on your own.",
   },
   "Nova Duo Pro": {
     name: "Oxify Nova Duo Pro",
     spec: "Hard shell · 2.0 ATA · Sitting · 1–5 people",
-    about: "Designed for group sessions, with room for up to five people to sit together comfortably — ideal for families, teams and wellness spaces.",
+    about: "Room for up to five, side by side. Bring your family, your team or your clients into every session — and rise together.",
   },
   "Nova Quad": {
     name: "Oxify Nova Quad",
     spec: "Hard shell · 2.0 ATA · Sitting · 1–5 people",
-    about: "Our largest seated chamber, made for group sessions in busy wellness, sports and clinical settings.",
+    about: "Our largest seated chamber, built for teams that train hard and wellness spaces that never slow down.",
   },
   Club: {
     name: "Oxify Club",
     spec: "Hard shell · 2.0 ATA · Walk-in cabin · Up to 4 people",
-    about: "A walk-in cabin where up to four people sit side by side — a calm space to relax, read or unwind through every session.",
+    about: "A walk-in cabin for up to four. Step in, sit back, and make every session your time to reset, refocus and recharge.",
   },
   Forge: {
     name: "Oxify Forge",
     spec: "Hard shell · 2.0 ATA · Sitting · 1 person",
-    about: "A spacious single-person chamber with a reclining seat and large windows, so every session feels bright, open and relaxed.",
+    about: "Your own space to reset. A reclining seat and big, bright windows turn every session into time that's fully yours.",
   },
   "Luma Pro": {
     name: "Oxify Luma Pro",
     spec: "Hard shell · 2.0 ATA · Lying · 1 person",
-    about: "A bright lie-down chamber with room for an adult and a child, and large windows that keep the space open and calm.",
+    about: "Lie back in a bright, open chamber with room for an adult and a child — every session, a chance to reset together.",
   },
   "Luma Standard": {
     name: "Oxify Luma Standard",
     spec: "Hard shell · 2.0 ATA · Lying · 1 person",
-    about: "A lie-down chamber with an easy-entry bed, so you can stretch out and rest for the whole session.",
+    about: "Stretch out and switch off. An easy-entry bed makes every session simple — all that's left is to rest and reset.",
   },
   "Flow Extended": {
     name: "Oxify Flow Extended",
     spec: "Soft shell · 1.5 ATA · Sitting · 1 person",
-    about: "An upright chamber with room for two, so sessions are easy to share — or roomy enough to recline on your own.",
+    about: "Room for two, upright and open. Share the session or claim the space — either way, you step out ready for what's next.",
   },
   Flow: {
     name: "Oxify Flow",
     spec: "Soft shell · 1.5 ATA · Sitting · 1 person",
-    about: "A compact seated chamber that fits smaller rooms, with an easy zip-in entry that makes every session simple.",
+    about: "Compact enough for any room, ready whenever you are. Zip in, sit back, and make every session part of your routine.",
   },
   Sit: {
     name: "Oxify Sit",
     spec: "Soft shell · 1.5 ATA · Sitting · 1 person",
-    about: "A seated chamber designed around easy access — step in, settle into an upright seat, and begin.",
+    about: "Easy in, easy reset. Step in, settle into an upright seat, and give yourself the session you've earned.",
   },
   "Sit Plus": {
     name: "Oxify Sit Plus",
     spec: "Soft shell · 1.4 ATA · Wheelchair accessible · 1 person",
-    about: "Our wheelchair-accessible chamber, with a wide entry so you can simply roll in and go.",
+    about: "No barriers. A wide, wheelchair-accessible entry means you simply roll in and go — because everyone deserves to achieve everything.",
   },
   Rest: {
     name: "Oxify Rest",
     spec: "Soft shell · 1.5 ATA · Lying · 1 person",
-    about: "A roomy lie-down chamber with plenty of windows, made for full-body comfort at home or in a clinic.",
+    about: "Stretch out from head to toe. A roomy lie-down chamber with plenty of windows, made for full-body rest at home or in a clinic.",
   },
 };
 

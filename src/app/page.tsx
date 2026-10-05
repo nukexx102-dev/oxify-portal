@@ -166,6 +166,7 @@ export default function LookupPage() {
         />
 
         <div className="flex flex-col items-center gap-3 text-center">
+          <span className="text-[10.5px] font-semibold uppercase tracking-[2px] text-accent">{CONTACT.tagline}</span>
           <h1 className="text-balance text-[36px] font-semibold leading-[1.05] tracking-[-1.2px] text-ink">
             Track your order
           </h1>
