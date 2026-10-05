@@ -484,16 +484,13 @@ function ContactButtons({ coordFirst }: { coordFirst: string | null }) {
 }
 
 // "Where your order is" — the Now/Next row, then one milestone per journey
-// status: a horizontal rail with hover tooltips on desktop, a vertical rail
-// on mobile, where tapping a milestone pins its tooltip open. "View the full journey" lists every step grouped by phase;
-// hovering (or tapping) a step's icon shows its description.
+// status: a horizontal rail on desktop, a vertical rail on mobile. "View the
+// full journey" lists every step grouped by phase. In both, a step's
+// description shows only while it's hovered — never pinned open by a click
+// (on touch screens a tap shows it and tapping elsewhere hides it).
 function JourneyPanel({ currentStepIndex }: { currentStepIndex: number }) {
   const [hovered, setHovered] = useState<number | null>(null);
-  const [pinned, setPinned] = useState<number | null>(null);
   const [journeyOpen, setJourneyOpen] = useState(false);
-  // Same hover/pin pattern for the full-journey list's icons, keyed by status.
-  const [listHovered, setListHovered] = useState<string | null>(null);
-  const [listPinned, setListPinned] = useState<string | null>(null);
   const total = JOURNEY.length;
   const last = total - 1;
 
@@ -527,7 +524,7 @@ function JourneyPanel({ currentStepIndex }: { currentStepIndex: number }) {
           {JOURNEY.map((step, i) => {
             const done = currentStepIndex > i;
             const current = currentStepIndex === i;
-            const open = hovered === i || pinned === i;
+            const open = hovered === i;
             const edge = i === 0 ? "left" : i === last ? "right" : "center";
             return (
               <li key={step.status} className={"flex flex-col min-[720px]:flex-row " + (i === 0 ? "flex-none" : "min-[720px]:flex-1")}>
@@ -543,7 +540,6 @@ function JourneyPanel({ currentStepIndex }: { currentStepIndex: number }) {
                 <div
                   onMouseEnter={() => setHovered(i)}
                   onMouseLeave={() => setHovered((h) => (h === i ? null : h))}
-                  onClick={() => setPinned((p) => (p === i ? null : i))}
                   className={
                     "relative flex flex-none cursor-pointer flex-row items-center gap-3.5 py-1.5 min-[720px]:w-24 min-[720px]:flex-col min-[720px]:gap-[11px] min-[720px]:py-0 " +
                     (open ? "z-20" : "z-[1]")
@@ -620,7 +616,7 @@ function JourneyPanel({ currentStepIndex }: { currentStepIndex: number }) {
       </button>
 
       {journeyOpen && (
-        <div className="grid grid-cols-1 gap-5 pt-[22px] [animation:ox-fade_260ms_ease_both] min-[720px]:grid-cols-3">
+        <div className="relative z-10 grid grid-cols-1 gap-5 pt-[22px] [animation:ox-fade_260ms_ease_both] min-[720px]:grid-cols-3">
           {JOURNEY_PHASES.map((phase) => (
             <div key={phase.title} className="flex flex-col gap-1">
               <span className={`${eyebrow} px-2.5 pb-2 text-muted`}>{phase.title}</span>
@@ -630,7 +626,6 @@ function JourneyPanel({ currentStepIndex }: { currentStepIndex: number }) {
                 const step = JOURNEY[i];
                 const done = currentStepIndex > i;
                 const current = currentStepIndex === i;
-                const tipOpen = listHovered === status || listPinned === status;
                 return (
                   <div
                     key={status}
@@ -639,39 +634,26 @@ function JourneyPanel({ currentStepIndex }: { currentStepIndex: number }) {
                       (current ? "bg-accent/6 shadow-[inset_0_0_0_1px_rgba(205,181,132,.25)]" : "")
                     }
                   >
-                    {/* The step's description shows only while its icon is
-                        hovered or focused; a tap pins it open on touch. */}
-                    <span
-                      className={"relative flex-none " + (tipOpen ? "z-20" : "z-[1]")}
-                      onMouseEnter={() => setListHovered(status)}
-                      onMouseLeave={() => setListHovered((h) => (h === status ? null : h))}
-                    >
+                    {/* Description shows only while the icon is hovered (or
+                        reached with the keyboard) — pure CSS, nothing pins. */}
+                    <span className="group/tip relative flex-none">
                       <button
                         type="button"
                         aria-label={`${step.label}: ${step.tip}`}
-                        aria-expanded={tipOpen}
-                        onClick={() => setListPinned((p) => (p === status ? null : status))}
-                        onFocus={() => setListHovered(status)}
-                        onBlur={() => setListHovered((h) => (h === status ? null : h))}
                         className={
-                          "grid h-[34px] w-[34px] cursor-pointer place-items-center rounded-[10px] border transition-all duration-200 " +
-                          (tipOpen
-                            ? "border-accent bg-accent/14 text-accent shadow-[0_0_0_4px_rgba(205,181,132,.12),0_0_18px_rgba(205,181,132,.5)]"
-                            : current
-                              ? "border-accent bg-accent/14 text-accent shadow-[0_0_16px_rgba(205,181,132,.4)]"
-                              : done
-                                ? "border-accent/35 bg-tile text-accent"
-                                : "border-line-strong bg-tile text-muted")
+                          "grid h-[34px] w-[34px] cursor-default place-items-center rounded-[10px] border transition-all duration-200 hover:border-accent hover:bg-accent/14 hover:text-accent hover:shadow-[0_0_0_4px_rgba(205,181,132,.12),0_0_18px_rgba(205,181,132,.5)] focus-visible:border-accent focus-visible:outline-none " +
+                          (current
+                            ? "border-accent bg-accent/14 text-accent shadow-[0_0_16px_rgba(205,181,132,.4)]"
+                            : done
+                              ? "border-accent/35 bg-tile text-accent"
+                              : "border-line-strong bg-tile text-muted")
                         }
                       >
                         <Icon name={step.icon} size={16} />
                       </button>
                       <span
                         role="tooltip"
-                        className={
-                          "pointer-events-none absolute bottom-[calc(100%+10px)] left-0 w-[260px] max-w-[calc(100vw-56px)] rounded-xl border border-accent/35 bg-tile px-4 pb-[15px] pt-3.5 text-[12.5px] leading-[1.55] text-body shadow-[0_18px_40px_rgba(0,0,0,.55),0_0_24px_rgba(205,181,132,.12)] transition-[opacity,translate] duration-200 " +
-                          (tipOpen ? "translate-y-0 opacity-100" : "translate-y-1.5 opacity-0")
-                        }
+                        className="pointer-events-none absolute bottom-[calc(100%+10px)] left-0 z-30 w-[260px] max-w-[calc(100vw-56px)] translate-y-1.5 rounded-xl border border-accent/35 bg-tile px-4 pb-[15px] pt-3.5 text-[12.5px] leading-[1.55] text-body opacity-0 shadow-[0_18px_40px_rgba(0,0,0,.55),0_0_24px_rgba(205,181,132,.12)] transition-[opacity,translate] duration-200 group-hover/tip:translate-y-0 group-hover/tip:opacity-100 group-has-[:focus-visible]/tip:translate-y-0 group-has-[:focus-visible]/tip:opacity-100"
                       >
                         {step.tip}
                       </span>
