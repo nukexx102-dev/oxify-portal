@@ -27,8 +27,11 @@ function csvUrl(link: string): string | null {
   if (url.pathname.includes("/spreadsheets/d/e/")) return url.toString();
   const id = url.pathname.match(/\/spreadsheets\/d\/([\w-]+)/)?.[1];
   if (!id) return null;
-  const gid = url.hash.match(/gid=(\d+)/)?.[1] ?? url.searchParams.get("gid") ?? "0";
-  return `https://docs.google.com/spreadsheets/d/${id}/export?format=csv&gid=${gid}`;
+  // No tab in the link → let Google export the first tab. (Don't assume
+  // gid=0: sheets imported from .xlsx get random tab IDs, and an unknown
+  // gid makes the export fail with HTTP 400.)
+  const gid = url.hash.match(/gid=(\d+)/)?.[1] ?? url.searchParams.get("gid");
+  return `https://docs.google.com/spreadsheets/d/${id}/export?format=csv${gid ? `&gid=${gid}` : ""}`;
 }
 
 // Minimal RFC 4180 CSV parser — handles quoted cells, "" escapes, commas and
