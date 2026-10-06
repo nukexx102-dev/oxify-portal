@@ -27,6 +27,7 @@ const ORDER_FIELDS = {
   customerEmail: "Customer Email", // email
   firstName: "First Name", // short text
   chamberModel: "Chamber Model", // dropdown — e.g. "Nova Duo Pro"
+  brand: "Brand", // dropdown — e.g. "Oxify"; shown before the model name
   configuration: "🔧 Configuration", // labels — ATA + add-ons
   trackingLink: "Tracking Link", // text
   etaUs: "🇺🇸 Estimated Arrival Date in US", // date
@@ -347,6 +348,7 @@ export type OrderDetails = {
   orderNumber: string;
   status: string; // raw internal status, lowercase
   chamberModel: string; // raw CRM dropdown value, e.g. "Nova Duo Pro"
+  brand: string; // raw CRM dropdown value, e.g. "Oxify"
   configuration: string[];
   trackingLink: string | null;
   etaUs: string | null;
@@ -414,6 +416,7 @@ export async function lookupOrder(orderNumber: string, email: string): Promise<O
     orderNumber: textValue(fields, ORDER_FIELDS.orderNumber) || normalizeOrderNumber(orderNumber),
     status: (task.status?.status ?? "").toLowerCase(),
     chamberModel: dropdownValue(fields, ORDER_FIELDS.chamberModel),
+    brand: dropdownValue(fields, ORDER_FIELDS.brand),
     configuration: labelsValue(fields, ORDER_FIELDS.configuration),
     trackingLink: textValue(fields, ORDER_FIELDS.trackingLink) || null,
     etaUs: dateValue(fields, ORDER_FIELDS.etaUs),

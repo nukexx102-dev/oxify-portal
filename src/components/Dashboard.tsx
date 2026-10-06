@@ -88,7 +88,11 @@ export default function Dashboard({ data, onReset }: Props) {
   const [lastChecked] = useState(lastCheckedNow);
 
   const product = PRODUCTS[order.chamberModel];
-  const chamberName = product?.name ?? order.chamberModel;
+  // Brand + Chamber Model exactly as in the CRM ("Oxify" + "Flow Extended"),
+  // without doubling the brand if the model name already starts with it.
+  const chamberName = order.chamberModel.toLowerCase().startsWith(order.brand.toLowerCase())
+    ? order.chamberModel
+    : [order.brand, order.chamberModel].filter(Boolean).join(" ");
   const coordFirst = firstName(order.coordinatorName);
   const fillCoord = (s: string) =>
     s.replace(/^\{coord\}/, coordFirst ?? "Your order specialist").replaceAll("{coord}", coordFirst ?? "your order specialist");
