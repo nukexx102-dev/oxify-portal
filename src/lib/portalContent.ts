@@ -178,7 +178,7 @@ export const INSTALL_REMOTE_COPY: StatusCopy = {
 };
 
 // Soft chambers: shipped by DHL / FedEx, then always installed on-site by a
-// technician. DRAFT wording (Oct 2026) — pending the owner's approval.
+// technician. Owner-approved wording (Oct 2026); change only on request.
 export const SOFT_STATUS_COPY: Record<string, StatusCopy> = {
   "delivery scheduled": {
     heroHeadline: "Your DHL / FedEx delivery is being scheduled",
