@@ -57,7 +57,9 @@ All customer-facing text lives in `src/lib/portalContent.ts`:
 - the per-status headline, sub-line and "What happens next" text
 - contact details, the product catalog, and the two shared document links
 
-Delivery follows the order's **Delivery Method** field (`deliveryFor()`):
+**Soft chambers** (CRM `Chamber Type`, or the model when blank) always ship by
+DHL / FedEx and are then installed on-site by a technician (`SOFT_STATUS_COPY`).
+For **hard chambers**, delivery follows the order's **Delivery Method** field (`deliveryFor()`):
 Premium White Glove includes on-site installation and live training by a
 technician; Standard White Glove (also the default when empty) is delivery
 and placement, with setup and training remotely by phone or video. The

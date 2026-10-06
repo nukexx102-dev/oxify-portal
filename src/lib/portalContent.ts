@@ -12,17 +12,44 @@ export const CONTACT = {
   portalUrl: "portal.oxify.com",
 };
 
-// Delivery comes from the order's "Delivery Method" field in the CRM.
-// Per Oxify's policy, delivery, installation and training are separate
-// services: Premium White Glove includes on-site installation and live
-// training by a technician; Standard White Glove (the default when the
-// field is empty) is delivery and placement, with setup and training done
-// remotely by phone or video. `phrase` fills "{delivery}" in STATUS_COPY.
-export type Delivery = { label: string; phrase: string; note: string; onSiteInstall: boolean };
+// How the chamber is delivered and set up. Per Oxify's policy:
+// - Soft chambers always ship by DHL or FedEx, and once every package has
+//   arrived a technician visits to install it — whatever the CRM's Delivery
+//   Method field says.
+// - Hard chambers follow the order's "Delivery Method" field. Premium White
+//   Glove includes on-site installation and live training by a technician;
+//   Standard White Glove (the default when the field is empty) is delivery
+//   and placement, with setup and training done remotely by phone or video.
+// `phrase` fills "{delivery}" in STATUS_COPY.
+export type Delivery = {
+  kind: "soft" | "premium" | "standard" | "curbside";
+  label: string;
+  phrase: string;
+  note: string;
+  onSiteInstall: boolean;
+};
 
-export function deliveryFor(method: string): Delivery {
+// Soft vs hard comes from the CRM's "Chamber Type" field; when that's blank,
+// from the model's spec line (Flow, Sit, Rest… are soft shell).
+export function isSoftChamber(chamberType: string, model: string): boolean {
+  if (/soft/i.test(chamberType)) return true;
+  if (/hard/i.test(chamberType)) return false;
+  return Boolean(PRODUCTS[model]?.spec.startsWith("Soft"));
+}
+
+export function deliveryFor(method: string, softChamber = false): Delivery {
+  if (softChamber) {
+    return {
+      kind: "soft",
+      label: "DHL / FedEx",
+      phrase: "DHL / FedEx delivery",
+      note: "Your chamber ships to you by DHL or FedEx. Once every package has arrived, a technician will visit to install it.",
+      onSiteInstall: true,
+    };
+  }
   if (/premium/i.test(method)) {
     return {
+      kind: "premium",
       label: "Premium White Glove",
       phrase: "Premium White Glove delivery",
       note: "White-glove delivery to your approved location, plus on-site installation and live training by a certified technician.",
@@ -31,6 +58,7 @@ export function deliveryFor(method: string): Delivery {
   }
   if (/curbside/i.test(method)) {
     return {
+      kind: "curbside",
       label: "Curbside Delivery",
       phrase: "curbside delivery",
       note: "Delivered to your curb. Setup support and training are provided remotely by phone or video.",
@@ -38,6 +66,7 @@ export function deliveryFor(method: string): Delivery {
     };
   }
   return {
+    kind: "standard",
     label: "Standard White Glove",
     phrase: "Standard White Glove delivery",
     note: "Offloading, uncrating, packaging removal and placement at your approved location. Setup support and training are provided remotely by phone or video.",
@@ -47,9 +76,10 @@ export function deliveryFor(method: string): Delivery {
 
 // The customer journey, in order. `status` MUST exactly match (lowercase) a
 // native ClickUp status on the OXFY ORDER STATUS CRM list. `tip` is the
-// milestone tooltip. Wording and timing follow Morelli Medical's portal
-// (its step descriptions and its Premium White Glove copy); Morelli shows
-// customers no production or shipping lead times, so neither does this.
+// milestone hover description (hard chambers, Premium for Setup & Training);
+// `tipSoft` / `tipRemote` replace it for soft chambers / hard chambers
+// without on-site installation — see stepTip(). Production and shipping
+// wording follows Morelli's portal, which shows customers no lead times.
 export const JOURNEY = [
   {
     status: "in production",
@@ -79,21 +109,33 @@ export const JOURNEY = [
     status: "delivery scheduled",
     label: "Delivery Scheduled",
     icon: "calendar",
-    tip: "The logistics team is booking a truck, arranging pickup of your chamber, and finalizing your delivery appointment — date, arrival window, and access details.",
+    tip: "Our logistics team is booking the truck and finalizing your white-glove delivery: date, arrival window and access details.",
+    tipSoft: "Your chamber ships to you by DHL or FedEx. You'll receive tracking details so you can follow each package to your door.",
   },
   {
     status: "installation scheduling",
     label: "Setup & Training",
     icon: "technician",
-    tip: "We're scheduling your setup support — a phone or video walkthrough of the connections, setup and operation, or an on-site technician visit if it's included in your order.",
+    tip: "A certified technician will schedule a visit to install your chamber and give you hands-on training.",
+    tipRemote: "Our technician will schedule a remote call to walk you through the connections, basic setup and how to operate your chamber.",
+    tipSoft: "Once all your packages have arrived, we'll schedule a technician to visit and install your chamber for you.",
   },
   {
     status: "delivered",
     label: "Delivered",
     icon: "home",
-    tip: "Your chamber has been delivered and set up — you're ready to begin your sessions.",
+    tip: "Your chamber is delivered and set up — you're ready to begin your sessions.",
   },
 ] as const;
+
+export type JourneyStep = (typeof JOURNEY)[number];
+
+/** The hover description for a step, matching how this order is delivered and set up. */
+export function stepTip(step: JourneyStep, delivery: Delivery): string {
+  if (delivery.kind === "soft" && "tipSoft" in step) return step.tipSoft;
+  if (!delivery.onSiteInstall && "tipRemote" in step) return step.tipRemote;
+  return step.tip;
+}
 
 // Columns for the expandable "View the full journey" list — every JOURNEY
 // status should appear in exactly one phase.
@@ -115,9 +157,10 @@ export type StatusCopy = { heroHeadline: string; heroSub: string; whatHappensNex
 // next" are the owner's approved tables (Oct 2026) — change them only on
 // request. "{coord}"
 // becomes the order specialist's first name and "{delivery}" the order's
-// delivery type (deliveryFor().phrase). "installation scheduling" has a
-// second version, INSTALL_REMOTE_COPY, for orders without on-site
-// installation (anything but Premium White Glove).
+// delivery type (deliveryFor().phrase). Soft chambers use SOFT_STATUS_COPY
+// for the statuses where their DHL/FedEx + technician process differs;
+// hard chambers without on-site installation use INSTALL_REMOTE_COPY for
+// "installation scheduling".
 const PRE_PRODUCTION_COPY: StatusCopy = {
   heroHeadline: "Your order has been received",
   heroSub: "Your order is in process.",
@@ -131,6 +174,23 @@ export const INSTALL_REMOTE_COPY: StatusCopy = {
   heroSub: "We're scheduling your phone or video session to help you get set up!",
   whatHappensNext:
     "Your chamber has been delivered. Next, our team will schedule a remote call with our technician to walk you through the equipment connections, basic setup and how to operate your chamber. Please let us know your availability for the remote call.",
+};
+
+// Soft chambers: shipped by DHL / FedEx, then always installed on-site by a
+// technician. DRAFT wording (Oct 2026) — pending the owner's approval.
+export const SOFT_STATUS_COPY: Record<string, StatusCopy> = {
+  "delivery scheduled": {
+    heroHeadline: "Your DHL / FedEx delivery is being scheduled",
+    heroSub: "Your order is now being scheduled for delivery.",
+    whatHappensNext:
+      "Your chamber is on its way to you by DHL or FedEx and may arrive in several packages. You'll receive tracking details so you can follow each one to your door. Once everything has arrived, we'll schedule your technician's installation visit.",
+  },
+  "installation scheduling": {
+    heroHeadline: "Technician Scheduling",
+    heroSub: "We are currently finalizing the technician's schedule to guide you on your setup!",
+    whatHappensNext:
+      "All your packages have been delivered. Next, a technician will schedule a visit to install your chamber and walk you through how to use it, subject to technician availability, travel and site readiness. We will reach out to confirm the date and time.",
+  },
 };
 
 export const STATUS_COPY: Record<string, StatusCopy> = {

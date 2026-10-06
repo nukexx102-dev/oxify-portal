@@ -12,8 +12,10 @@ import {
   deliveryFor,
   EXCEPTION_STATUSES,
   INSTALL_REMOTE_COPY,
+  isSoftChamber,
   JOURNEY,
   PRE_PRODUCTION_STATUSES,
+  SOFT_STATUS_COPY,
   STATUS_COPY,
   type StatusCopy,
 } from "@/lib/portalContent";
@@ -31,6 +33,7 @@ const ORDER_FIELDS = {
   chamberModel: "Chamber Model", // dropdown — e.g. "Nova Duo Pro"
   brand: "Brand", // dropdown — e.g. "Oxify"; shown before the model name
   deliveryMethod: "Delivery Method", // dropdown — Premium White Glove / Standard White Glove / Standard Curbside Delivery
+  chamberType: "Chamber Type", // dropdown — Hard Chamber / Soft Chamber; see isSoftChamber()
   configuration: "🔧 Configuration", // labels — ATA + add-ons
   trackingLink: "Tracking Link", // text
   etaUs: "🇺🇸 Estimated Arrival Date in US", // date
@@ -353,6 +356,7 @@ export type OrderDetails = {
   chamberModel: string; // raw CRM dropdown value, e.g. "Nova Duo Pro"
   brand: string; // raw CRM dropdown value, e.g. "Oxify"
   deliveryMethod: string; // raw CRM dropdown value; see deliveryFor()
+  chamberType: string; // raw CRM dropdown value, e.g. "Soft Chamber"
   configuration: string[];
   trackingLink: string | null;
   etaUs: string | null;
@@ -422,6 +426,7 @@ export async function lookupOrder(orderNumber: string, email: string): Promise<O
     chamberModel: dropdownValue(fields, ORDER_FIELDS.chamberModel),
     brand: dropdownValue(fields, ORDER_FIELDS.brand),
     deliveryMethod: dropdownValue(fields, ORDER_FIELDS.deliveryMethod),
+    chamberType: dropdownValue(fields, ORDER_FIELDS.chamberType),
     configuration: labelsValue(fields, ORDER_FIELDS.configuration),
     trackingLink: textValue(fields, ORDER_FIELDS.trackingLink) || null,
     etaUs: dateValue(fields, ORDER_FIELDS.etaUs),
@@ -462,10 +467,12 @@ const FALLBACK_COPY: StatusCopy = {
 
 /** Copy for this order's status: a ClickUp row if one matches, else the built-in default. */
 async function getStatusCopy(order: OrderDetails): Promise<StatusCopy> {
+  const soft = isSoftChamber(order.chamberType, order.chamberModel);
   const builtIn =
-    order.status === "installation scheduling" && !deliveryFor(order.deliveryMethod).onSiteInstall
+    (soft ? SOFT_STATUS_COPY[order.status] : undefined) ??
+    (order.status === "installation scheduling" && !deliveryFor(order.deliveryMethod, soft).onSiteInstall
       ? INSTALL_REMOTE_COPY
-      : (STATUS_COPY[order.status] ?? FALLBACK_COPY);
+      : (STATUS_COPY[order.status] ?? FALLBACK_COPY));
   if (!STATUS_COPY_LIST_ID) return builtIn;
 
   try {

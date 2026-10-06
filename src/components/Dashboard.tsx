@@ -3,7 +3,17 @@
 import { useEffect, useRef, useState } from "react";
 import Image from "next/image";
 import type { DashboardData } from "@/lib/clickup";
-import { CONTACT, deliveryFor, JOURNEY, JOURNEY_PHASES, PRODUCTS, SHARED_DOCS } from "@/lib/portalContent";
+import {
+  CONTACT,
+  deliveryFor,
+  isSoftChamber,
+  JOURNEY,
+  JOURNEY_PHASES,
+  PRODUCTS,
+  SHARED_DOCS,
+  stepTip,
+  type Delivery,
+} from "@/lib/portalContent";
 
 type Props = {
   data: DashboardData;
@@ -95,7 +105,7 @@ export default function Dashboard({ data, onReset }: Props) {
     ? order.chamberModel
     : [order.brand, order.chamberModel].filter(Boolean).join(" ");
   const coordFirst = firstName(order.coordinatorName);
-  const delivery = deliveryFor(order.deliveryMethod);
+  const delivery = deliveryFor(order.deliveryMethod, isSoftChamber(order.chamberType, order.chamberModel));
   // Fills the copy placeholders: {coord} → the order specialist's first name,
   // {delivery} → the order's delivery type (e.g. "Standard White Glove delivery").
   const fill = (s: string) =>
@@ -346,7 +356,7 @@ export default function Dashboard({ data, onReset }: Props) {
       {/* Photos from the order's Order Photos field, under the details. */}
       {photos.length > 0 && <PhotoCarousel photos={photos} />}
 
-      <JourneyPanel currentStepIndex={currentStepIndex} />
+      <JourneyPanel currentStepIndex={currentStepIndex} delivery={delivery} />
 
       {/* Balance due — only once it's actually blocking delivery */}
       {showBalanceDue && (
@@ -512,7 +522,7 @@ function ContactButtons({ coordFirst }: { coordFirst: string | null }) {
 // full journey" lists every step grouped by phase. In both, a step's
 // description shows only while it's hovered — never pinned open by a click
 // (on touch screens a tap shows it and tapping elsewhere hides it).
-function JourneyPanel({ currentStepIndex }: { currentStepIndex: number }) {
+function JourneyPanel({ currentStepIndex, delivery }: { currentStepIndex: number; delivery: Delivery }) {
   const [hovered, setHovered] = useState<number | null>(null);
   const [journeyOpen, setJourneyOpen] = useState(false);
   const total = JOURNEY.length;
@@ -614,7 +624,7 @@ function JourneyPanel({ currentStepIndex }: { currentStepIndex: number }) {
                         {current ? "Current" : done ? "Complete" : "Upcoming"}
                       </span>
                     </span>
-                    <span className="text-[12.5px] leading-[1.55] text-body">{step.tip}</span>
+                    <span className="text-[12.5px] leading-[1.55] text-body">{stepTip(step, delivery)}</span>
                     <span className="pt-0.5 text-[10.5px] font-medium tracking-[0.3px] text-muted">
                       Step {i + 1} of {total}
                     </span>
@@ -663,7 +673,7 @@ function JourneyPanel({ currentStepIndex }: { currentStepIndex: number }) {
                     <span className="group/tip relative flex-none">
                       <button
                         type="button"
-                        aria-label={`${step.label}: ${step.tip}`}
+                        aria-label={`${step.label}: ${stepTip(step, delivery)}`}
                         className={
                           "grid h-[34px] w-[34px] cursor-default place-items-center rounded-[10px] border transition-all duration-200 hover:border-accent hover:bg-accent/14 hover:text-accent hover:shadow-[0_0_0_4px_rgba(205,181,132,.12),0_0_18px_rgba(205,181,132,.5)] focus-visible:border-accent focus-visible:outline-none " +
                           (current
@@ -679,7 +689,7 @@ function JourneyPanel({ currentStepIndex }: { currentStepIndex: number }) {
                         role="tooltip"
                         className="pointer-events-none absolute bottom-[calc(100%+10px)] left-0 z-30 w-[260px] max-w-[calc(100vw-56px)] translate-y-1.5 rounded-xl border border-accent/35 bg-tile px-4 pb-[15px] pt-3.5 text-[12.5px] leading-[1.55] text-body opacity-0 shadow-[0_18px_40px_rgba(0,0,0,.55),0_0_24px_rgba(205,181,132,.12)] transition-[opacity,translate] duration-200 group-hover/tip:translate-y-0 group-hover/tip:opacity-100 group-has-[:focus-visible]/tip:translate-y-0 group-has-[:focus-visible]/tip:opacity-100"
                       >
-                        {step.tip}
+                        {stepTip(step, delivery)}
                       </span>
                     </span>
                     <span className={"text-[13.5px] leading-[1.3] " + (current ? "font-semibold text-accent" : done ? "text-ink" : "text-muted")}>
