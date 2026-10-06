@@ -34,6 +34,7 @@ a lookup. The others fill the page when set:
   links shared as "Anyone with the link can view".
 - `🔧 Configuration` → configuration row. "Water Chiller AC" adds the
   "ships separately" note.
+- `Delivery Method` → delivery wording and which setup path is shown
 - `Tracking Link`, `Delivery Window`, `📦 Package Count`,
   `Product SN` → order details
 - `🇺🇸 Estimated Arrival Date in US`, `ETA to Door` → the two date cards
@@ -56,9 +57,12 @@ All customer-facing text lives in `src/lib/portalContent.ts`:
 - the per-status headline, sub-line and "What happens next" text
 - contact details, the product catalog, and the two shared document links
 
-The wording and timing follow Morelli's portal. Every Oxify order is shown
-as Premium White Glove (`DELIVERY`), whatever the CRM's `Delivery Method`
-field says.
+Delivery follows the order's **Delivery Method** field (`deliveryFor()`):
+Premium White Glove includes on-site installation and live training by a
+technician; Standard White Glove (also the default when empty) is delivery
+and placement, with setup and training remotely by phone or video. The
+"installation scheduling" status shows the technician version (Premium) or
+the remote-setup version (`INSTALL_REMOTE_COPY`) accordingly.
 
 Optionally, set `CLICKUP_STATUS_COPY_LIST_ID` to an **Oxify-only** copy of
 the "Portal Status Copy" list so staff can edit the headline and "What

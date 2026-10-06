@@ -3,7 +3,7 @@
 import { useEffect, useRef, useState } from "react";
 import Image from "next/image";
 import type { DashboardData } from "@/lib/clickup";
-import { CONTACT, DELIVERY, JOURNEY, JOURNEY_PHASES, PRODUCTS, SHARED_DOCS } from "@/lib/portalContent";
+import { CONTACT, deliveryFor, JOURNEY, JOURNEY_PHASES, PRODUCTS, SHARED_DOCS } from "@/lib/portalContent";
 
 type Props = {
   data: DashboardData;
@@ -95,17 +95,23 @@ export default function Dashboard({ data, onReset }: Props) {
     ? order.chamberModel
     : [order.brand, order.chamberModel].filter(Boolean).join(" ");
   const coordFirst = firstName(order.coordinatorName);
-  const fillCoord = (s: string) =>
-    s.replace(/^\{coord\}/, coordFirst ?? "Your order specialist").replaceAll("{coord}", coordFirst ?? "your order specialist");
+  const delivery = deliveryFor(order.deliveryMethod);
+  // Fills the copy placeholders: {coord} → the order specialist's first name,
+  // {delivery} → the order's delivery type (e.g. "Standard White Glove delivery").
+  const fill = (s: string) =>
+    s
+      .replace(/^\{coord\}/, coordFirst ?? "Your order specialist")
+      .replaceAll("{coord}", coordFirst ?? "your order specialist")
+      .replaceAll("{delivery}", delivery.phrase);
 
   if (kind === "exception") {
     return (
       <main className="flex min-h-full flex-1 flex-col items-center justify-center px-6 py-16">
         <div className="flex w-full max-w-md flex-col items-center gap-6 text-center">
           <Image src="/oxify-logo-white.png" alt="Oxify" width={1000} height={359} className="h-[34px] w-auto" />
-          <h1 className="text-[30px] font-semibold leading-tight tracking-[-0.8px] text-ink">{copy.heroHeadline}</h1>
-          <p className="text-[15px] font-light text-body">{copy.heroSub}</p>
-          <p className={`${panel} p-6 text-left text-[14px] font-light leading-[1.7] text-body`}>{fillCoord(copy.whatHappensNext)}</p>
+          <h1 className="text-[30px] font-semibold leading-tight tracking-[-0.8px] text-ink">{fill(copy.heroHeadline)}</h1>
+          <p className="text-[15px] font-light text-body">{fill(copy.heroSub)}</p>
+          <p className={`${panel} p-6 text-left text-[14px] font-light leading-[1.7] text-body`}>{fill(copy.whatHappensNext)}</p>
           <ContactButtons coordFirst={null} />
           <button onClick={onReset} className="text-[12px] font-medium text-muted underline underline-offset-[3px] hover:text-ink">
             Look up a different order
@@ -132,7 +138,7 @@ export default function Dashboard({ data, onReset }: Props) {
   if (order.configuration.length > 0) {
     detailRows.push({ icon: "config", label: "Configuration", value: order.configuration.join(" · ") });
   }
-  detailRows.push({ icon: "truck", label: "Delivery", value: DELIVERY.label, note: DELIVERY.note });
+  detailRows.push({ icon: "truck", label: "Delivery", value: delivery.label, note: delivery.note });
   detailRows.push(
     order.trackingLink
       ? /^https?:\/\//i.test(order.trackingLink)
@@ -271,9 +277,9 @@ export default function Dashboard({ data, onReset }: Props) {
       {/* Hero */}
       <section className="pb-1 pt-5 min-[720px]:pb-3 min-[720px]:pt-7">
         <h1 className="mb-4 max-w-[15ch] text-balance text-[32px] font-semibold leading-[1.04] tracking-[-1px] text-ink min-[720px]:text-[52px] min-[720px]:tracking-[-2px]">
-          {copy.heroHeadline}
+          {fill(copy.heroHeadline)}
         </h1>
-        <p className="max-w-[56ch] text-pretty text-[15px] font-light leading-[1.6] text-body min-[720px]:text-[17px]">{copy.heroSub}</p>
+        <p className="max-w-[56ch] text-pretty text-[15px] font-light leading-[1.6] text-body min-[720px]:text-[17px]">{fill(copy.heroSub)}</p>
       </section>
 
       {order.hasModelPhoto && (
@@ -388,7 +394,7 @@ export default function Dashboard({ data, onReset }: Props) {
       <section className="grid grid-cols-1 gap-4 pt-4 min-[900px]:grid-cols-[1.55fr_1fr]">
         <div className={`${panel} px-5 pb-[22px] pt-5 min-[720px]:px-[26px] min-[720px]:pb-[26px] min-[720px]:pt-6`}>
           <h2 className="mb-3 text-[18px] font-medium tracking-[-0.3px] text-ink">What happens next</h2>
-          <p className="text-pretty text-[14.5px] font-light leading-[1.7] text-body">{fillCoord(copy.whatHappensNext)}</p>
+          <p className="text-pretty text-[14.5px] font-light leading-[1.7] text-body">{fill(copy.whatHappensNext)}</p>
         </div>
         <div className={`${panel} flex flex-col px-5 pb-[22px] pt-5 min-[720px]:px-[26px] min-[720px]:pb-[26px] min-[720px]:pt-6`}>
           <div className="mb-[22px] flex items-center gap-[13px]">

@@ -12,13 +12,38 @@ export const CONTACT = {
   portalUrl: "portal.oxify.com",
 };
 
-// Every Oxify order — hard and soft chambers alike — ships Premium White
-// Glove, so the portal shows this regardless of the CRM's Delivery Method
-// field (which was copied over from Morelli's list).
-export const DELIVERY = {
-  label: "Premium White Glove",
-  note: "Delivery into your space, full installation, and hands-on training — included with every Oxify chamber.",
-};
+// Delivery comes from the order's "Delivery Method" field in the CRM.
+// Per Oxify's policy, delivery, installation and training are separate
+// services: Premium White Glove includes on-site installation and live
+// training by a technician; Standard White Glove (the default when the
+// field is empty) is delivery and placement, with setup and training done
+// remotely by phone or video. `phrase` fills "{delivery}" in STATUS_COPY.
+export type Delivery = { label: string; phrase: string; note: string; onSiteInstall: boolean };
+
+export function deliveryFor(method: string): Delivery {
+  if (/premium/i.test(method)) {
+    return {
+      label: "Premium White Glove",
+      phrase: "Premium White Glove delivery",
+      note: "White-glove delivery to your approved location, plus on-site installation and live training by a certified technician.",
+      onSiteInstall: true,
+    };
+  }
+  if (/curbside/i.test(method)) {
+    return {
+      label: "Curbside Delivery",
+      phrase: "curbside delivery",
+      note: "Delivered to your curb. Setup support and training are provided remotely by phone or video.",
+      onSiteInstall: false,
+    };
+  }
+  return {
+    label: "Standard White Glove",
+    phrase: "Standard White Glove delivery",
+    note: "Offloading, uncrating, packaging removal and placement at your approved location. Setup support and training are provided remotely by phone or video.",
+    onSiteInstall: false,
+  };
+}
 
 // The customer journey, in order. `status` MUST exactly match (lowercase) a
 // native ClickUp status on the OXFY ORDER STATUS CRM list. `tip` is the
@@ -52,21 +77,21 @@ export const JOURNEY = [
   },
   {
     status: "delivery scheduled",
-    label: "Premium White Glove Scheduled",
+    label: "Delivery Scheduled",
     icon: "calendar",
-    tip: "The logistics team is booking a truck, arranging pickup of your chamber, and finalizing your Premium White Glove delivery appointment — date, arrival window, and access details.",
+    tip: "The logistics team is booking a truck, arranging pickup of your chamber, and finalizing your delivery appointment — date, arrival window, and access details.",
   },
   {
     status: "installation scheduling",
-    label: "Installation Scheduling",
+    label: "Setup & Training",
     icon: "technician",
-    tip: "Hard chambers: our crew brings your chamber inside and places it, and a certified technician completes the full installation and hands-on training within about 2 days. Soft chambers: our crew confirms every package, then returns the next day to set it up, install it, and train you on site.",
+    tip: "We're scheduling your setup support — a phone or video walkthrough of the connections, setup and operation, or an on-site technician visit if it's included in your order.",
   },
   {
     status: "delivered",
-    label: "Delivered & Installed",
+    label: "Delivered",
     icon: "home",
-    tip: "Your chamber is installed and you've been walked through hands-on training — you're ready to begin your sessions.",
+    tip: "Your chamber has been delivered and set up — you're ready to begin your sessions.",
   },
 ] as const;
 
@@ -75,7 +100,7 @@ export const JOURNEY = [
 export const JOURNEY_PHASES = [
   { title: "Production", statuses: ["in production", "ready to ship"] },
   { title: "Shipping & customs", statuses: ["in transit", "customs clearance"] },
-  { title: "Premium White Glove delivery", statuses: ["delivery scheduled", "installation scheduling", "delivered"] },
+  { title: "Delivery & setup", statuses: ["delivery scheduled", "installation scheduling", "delivered"] },
 ];
 
 // Before production starts — the rail shows no current step yet. Both
@@ -88,15 +113,24 @@ export type StatusCopy = { heroHeadline: string; heroSub: string; whatHappensNex
 
 // Default copy per status. Headlines and the line under them are the owner's
 // approved table (Oct 2026) — change them only on request. The "What happens
-// next" text is adapted from Morelli's "Portal Status Copy" rows.
-// If CLICKUP_STATUS_COPY_LIST_ID is set, a matching row in that ClickUp list
-// overrides these (see getStatusCopy in clickup.ts). "{coord}" is replaced
-// with the order specialist's first name.
+// next" text is adapted from Morelli's "Portal Status Copy" rows. "{coord}"
+// becomes the order specialist's first name and "{delivery}" the order's
+// delivery type (deliveryFor().phrase). "installation scheduling" has a
+// second version, INSTALL_REMOTE_COPY, for orders without on-site
+// installation (anything but Premium White Glove).
 const PRE_PRODUCTION_COPY: StatusCopy = {
   heroHeadline: "Your order has been received",
   heroSub: "Your order is in process.",
   whatHappensNext:
     "Your order is being confirmed by the factory as they finalize your configuration and get everything ready to begin production. This part usually moves quickly — once production begins, you'll see it reflected here automatically.",
+};
+
+// Installation Scheduling for orders without on-site installation.
+export const INSTALL_REMOTE_COPY: StatusCopy = {
+  heroHeadline: "Setup Scheduling",
+  heroSub: "We're scheduling your phone or video session to help you get set up!",
+  whatHappensNext:
+    "Your chamber has been delivered. Next, our team will schedule a phone or video session to walk you through the equipment connections, basic setup and how to operate your chamber. {coord} will reach out to set a time that works for you.",
 };
 
 export const STATUS_COPY: Record<string, StatusCopy> = {
@@ -130,25 +164,25 @@ export const STATUS_COPY: Record<string, StatusCopy> = {
     heroHeadline: "Your chamber has arrived in the U.S. and is clearing customs",
     heroSub: "Your order is now going through customs clearance.",
     whatHappensNext:
-      "Your chamber has landed in the U.S. and is now going through customs clearance. This step is handled entirely by our freight and customs team. Once it clears, we'll move it toward your Premium White Glove delivery.",
+      "Your chamber has landed in the U.S. and is now going through customs clearance. This step is handled entirely by our freight and customs team. Once it clears, we'll move it toward your {delivery}.",
   },
   "delivery scheduled": {
-    heroHeadline: "Your Premium White Glove delivery is being scheduled",
+    heroHeadline: "Your {delivery} is being scheduled",
     heroSub: "Your order is now being scheduled for delivery.",
     whatHappensNext:
-      "Your chamber is close by and we're finalizing your Premium White Glove delivery appointment — including date, arrival window, and any access details we need from you. {coord} will reach out directly to confirm.",
+      "Your chamber is close by and we're finalizing your {delivery} appointment — including date, arrival window, and any access details we need from you. {coord} will reach out directly to confirm.",
   },
   "installation scheduling": {
     heroHeadline: "Technician Scheduling",
     heroSub: "We are currently finalizing the technician's schedule to guide you on your setup!",
     whatHappensNext:
-      "Your chamber has been delivered, and we're finalizing your certified technician's visit to complete the installation and walk you through hands-on training. {coord} will reach out to confirm the date and time.",
+      "Your chamber has been delivered. Next, a certified technician will visit to complete the installation and walk you through hands-on training, subject to technician availability, travel and site readiness. {coord} will reach out to confirm the date and time.",
   },
   delivered: {
     heroHeadline: "You're all set!",
     heroSub: "Your order was delivered! Any questions or concerns, please let us know!",
     whatHappensNext:
-      "Your chamber has been delivered and installed, and your training is complete. You're ready to begin using your chamber. If you have any questions along the way, {coord} is just a message or call away.",
+      "Your chamber has been delivered and set up, and your training is complete. You're ready to begin using your chamber. If you have any questions along the way, {coord} is just a message or call away.",
   },
   cancelled: {
     heroHeadline: "This order has been cancelled",
