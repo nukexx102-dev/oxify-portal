@@ -111,9 +111,9 @@ export const EXCEPTION_STATUSES = new Set(["cancelled", "refunded"]);
 
 export type StatusCopy = { heroHeadline: string; heroSub: string; whatHappensNext: string };
 
-// Default copy per status. Headlines and the line under them are the owner's
-// approved table (Oct 2026) — change them only on request. The "What happens
-// next" text is adapted from Morelli's "Portal Status Copy" rows. "{coord}"
+// Default copy per status. Headlines, the line under them and "What happens
+// next" are the owner's approved tables (Oct 2026) — change them only on
+// request. "{coord}"
 // becomes the order specialist's first name and "{delivery}" the order's
 // delivery type (deliveryFor().phrase). "installation scheduling" has a
 // second version, INSTALL_REMOTE_COPY, for orders without on-site
@@ -130,59 +130,63 @@ export const INSTALL_REMOTE_COPY: StatusCopy = {
   heroHeadline: "Setup Scheduling",
   heroSub: "We're scheduling your phone or video session to help you get set up!",
   whatHappensNext:
-    "Your chamber has been delivered. Next, our team will schedule a phone or video session to walk you through the equipment connections, basic setup and how to operate your chamber. {coord} will reach out to set a time that works for you.",
+    "Your chamber has been delivered. Next, our team will schedule a remote call with our technician to walk you through the equipment connections, basic setup and how to operate your chamber. Please let us know your availability for the remote call.",
 };
 
 export const STATUS_COPY: Record<string, StatusCopy> = {
   "order received": {
     ...PRE_PRODUCTION_COPY,
     heroSub: "We've just received your order — thank you for choosing Oxify. Our team will now begin to process your order!",
+    whatHappensNext:
+      "Our team is reviewing your order and confirming your configuration. Once everything is set, we'll send it to the factory, and you'll see each step update here automatically.",
   },
   "po sent/payment needed": {
     ...PRE_PRODUCTION_COPY,
     heroSub: "Our team is finalizing your order details and processing your order with the factory.",
+    whatHappensNext:
+      "We're finalizing your order with the factory to make sure we haven't missed anything. Once everything is finalized, your order will be lined up for production.",
   },
   "in production": {
     heroHeadline: "Your chamber is in production",
     heroSub: "Your chamber is now on the production line, where it will be built, assembled and tested.",
     whatHappensNext:
-      "Right now your chamber is being manufactured to your exact configuration. Once production wraps, it'll be prepared for shipping. We'll update this page automatically as it moves through each stage.",
+      "Your chamber is being built to your exact configuration, then assembled and tested, sometimes with extra testing to make sure it arrives 100% ready. Once it passes, it will be prepared for shipping.",
   },
   "ready to ship": {
     heroHeadline: "Your chamber is being prepared to ship",
     heroSub: "Your order is ready to ship! Our logistics team is now preparing the shipment details.",
     whatHappensNext:
-      "Your chamber has finished production and is now being packed and prepared for shipping. Once it ships, you'll see its progress update here.",
+      "Production has been completed! Your chamber is being prepared for shipment. You will receive tracking information once your chamber is loaded for shipment.",
   },
   "in transit": {
     heroHeadline: "Your chamber is in transit",
     heroSub: "Your order is on its way to you!",
     whatHappensNext:
-      "Your chamber is currently in transit. Once it arrives in the U.S., it'll move into customs clearance. We'll update your status as soon as it lands.",
+      "Your chamber is on its way to the United States. Our team will keep you updated throughout the transit phase. Once it arrives at the port, it will be sorted first and then move into U.S. customs clearance.",
   },
   "customs clearance": {
     heroHeadline: "Your chamber has arrived in the U.S. and is clearing customs",
     heroSub: "Your order is now going through customs clearance.",
     whatHappensNext:
-      "Your chamber has landed in the U.S. and is now going through customs clearance. This step is handled entirely by our freight and customs team. Once it clears, we'll move it toward your {delivery}.",
+      "Your chamber has arrived in the U.S. and is being inspected by U.S. customs. This step is outside our control, but our freight team is monitoring it closely. Once it clears, your chamber will be sent to our warehouse partners. After that, our team will reach out to you to schedule delivery.",
   },
   "delivery scheduled": {
     heroHeadline: "Your {delivery} is being scheduled",
     heroSub: "Your order is now being scheduled for delivery.",
     whatHappensNext:
-      "Your chamber is close by and we're finalizing your {delivery} appointment — including date, arrival window, and any access details we need from you. {coord} will reach out directly to confirm.",
+      "Your chamber is close by. We're finalizing your {delivery}: the date, arrival window and any access details for your space. Our team will keep in touch with you at this point.",
   },
   "installation scheduling": {
     heroHeadline: "Technician Scheduling",
     heroSub: "We are currently finalizing the technician's schedule to guide you on your setup!",
     whatHappensNext:
-      "Your chamber has been delivered. Next, a certified technician will visit to complete the installation and walk you through hands-on training, subject to technician availability, travel and site readiness. {coord} will reach out to confirm the date and time.",
+      "Your chamber has been delivered. After 2–3 days, a certified technician will schedule a visit to complete the installation and walk you through hands-on training, subject to technician availability, travel and site readiness. We will reach out to confirm the date and time.",
   },
   delivered: {
     heroHeadline: "You're all set!",
     heroSub: "Your order was delivered! Any questions or concerns, please let us know!",
     whatHappensNext:
-      "Your chamber has been delivered and set up, and your training is complete. You're ready to begin using your chamber. If you have any questions along the way, {coord} is just a message or call away.",
+      "Your chamber is installed and your training is complete. Your documents below are here whenever you need them, and we are just a message or call away. Enjoy your hyperbaric chamber!",
   },
   cancelled: {
     heroHeadline: "This order has been cancelled",
