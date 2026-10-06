@@ -325,9 +325,7 @@ export const PRODUCTS: Record<string, { spec: string; about: string }> = {
 };
 
 // Same document for every customer. Empty = "Coming soon" card.
-// TODO: Oxify's own Digital Protocol Book link (owner will supply it —
-// don't reuse Morelli's).
 export const SHARED_DOCS = {
   safetyChecklist: "https://drive.google.com/file/d/1eSwZnyTauM7wSO7PuIhEzkIdABRpKJpy/view?usp=sharing",
-  protocolBook: "",
+  protocolBook: "https://drive.google.com/file/d/18udce681aPH36_EJi0jKWd4d17g0O69s/view?usp=sharing",
 };
