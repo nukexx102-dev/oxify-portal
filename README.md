@@ -28,9 +28,9 @@ a lookup. The others fill the page when set:
 - `Chamber Color` → shown in the showcase and Order Details, and used to
   pick the photo. The photo shown is, in order: the order's own
   `🖼️ HBOT Photo (Model)` link (use for custom colors), else the row for its
-  model + color in the optional **Oxify Chamber Photos** list
-  (`CLICKUP_CHAMBER_PHOTOS_LIST_ID`; fields `Chamber Model`, `Chamber Color`,
-  `Photo`), else no photo — never a different color. Photos are Google Drive
+  model + color in the optional **Oxify Chamber Photos** Google Sheet
+  (`CHAMBER_PHOTOS_SHEET_URL`; columns `Chamber Model`, `Chamber Color`,
+  `Photo`; shared "Anyone with the link"), else no photo — never a different color. Photos are Google Drive
   links shared as "Anyone with the link can view".
 - `🔧 Configuration` → configuration row. "Water Chiller AC" adds the
   "ships separately" note.

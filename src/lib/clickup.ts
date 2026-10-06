@@ -7,6 +7,7 @@
 // from the portal — and for Order Number / Customer Email, makes every
 // lookup 404. Treat these names as a contract with ops.
 
+import { libraryRows } from "@/lib/chamberPhotos";
 import {
   EXCEPTION_STATUSES,
   JOURNEY,
@@ -20,9 +21,6 @@ const CLICKUP_API_BASE = "https://api.clickup.com/api/v2";
 const ORDERS_LIST_ID = process.env.CLICKUP_ORDERS_LIST_ID ?? "";
 // Optional — when unset, all customer-facing copy comes from STATUS_COPY.
 const STATUS_COPY_LIST_ID = process.env.CLICKUP_STATUS_COPY_LIST_ID ?? "";
-// Optional — the "Oxify Chamber Photos" library (one row per model + color).
-// When unset, only an order's own HBOT Photo link is used.
-const CHAMBER_PHOTOS_LIST_ID = process.env.CLICKUP_CHAMBER_PHOTOS_LIST_ID ?? "";
 
 const ORDER_FIELDS = {
   orderNumber: "Order Number", // short text — Shopify order name, e.g. "OXFY1020"
@@ -164,13 +162,6 @@ function modelPhotoSource(link: string): string[] | null {
   return [url.toString()];
 }
 
-// Fields on the "Oxify Chamber Photos" library list.
-const LIBRARY_FIELDS = {
-  model: "Chamber Model", // dropdown or text — same model names as the CRM
-  color: "Chamber Color", // dropdown or text — same color names as the CRM
-  photo: "Photo", // url — Google Drive link
-} as const;
-
 // Loose matching for model and color names, so "Oxify Original (Black)",
 // "oxify original", "Aqua Marine"/"Aquamarine" and "Oxify Nova Duo Pro"/
 // "Nova Duo Pro" all line up. Note "Nova Duo" ≠ "Nova Duo Pro".
@@ -181,35 +172,10 @@ function normalizeModel(v: string): string {
   return normalizeChoice(v).replace(/^oxify(?=.)/, "");
 }
 
-type LibraryRow = { model: string; color: string; photo: string };
-let libraryCache: { at: number; rows: LibraryRow[] } | null = null;
-
-// The whole library is small (one row per model + color), so it's read in
-// full and kept for a minute — photo edits in ClickUp show up within ~60s.
-async function libraryRows(): Promise<LibraryRow[]> {
-  if (!CHAMBER_PHOTOS_LIST_ID) return [];
-  if (libraryCache && Date.now() - libraryCache.at < 60_000) return libraryCache.rows;
-  const rows: LibraryRow[] = [];
-  for (let page = 0; page < 10; page++) {
-    const data = await clickupGet<{ tasks?: RawTask[]; last_page?: boolean }>(
-      `/list/${CHAMBER_PHOTOS_LIST_ID}/task?include_closed=true&page=${page}`
-    );
-    for (const t of data.tasks ?? []) {
-      rows.push({
-        model: choiceOrText(t.custom_fields, LIBRARY_FIELDS.model),
-        color: choiceOrText(t.custom_fields, LIBRARY_FIELDS.color),
-        photo: textValue(t.custom_fields, LIBRARY_FIELDS.photo),
-      });
-    }
-    if (data.last_page !== false || (data.tasks ?? []).length === 0) break;
-  }
-  libraryCache = { at: Date.now(), rows };
-  return rows;
-}
-
 /**
  * The photo link to show for an order: its own "🖼️ HBOT Photo (Model)" link
- * if set (custom colors), otherwise the library photo for its model + color,
+ * if set (custom colors), otherwise the photo-library sheet's row for its
+ * model + color (see chamberPhotos.ts),
  * otherwise "". Never a photo of a different color.
  */
 async function resolveModelPhotoLink(fields: RawCustomField[] | undefined): Promise<string> {
