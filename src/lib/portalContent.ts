@@ -92,41 +92,47 @@ const PRE_PRODUCTION_COPY: StatusCopy = {
 };
 
 export const STATUS_COPY: Record<string, StatusCopy> = {
-  "order received": PRE_PRODUCTION_COPY,
-  "po sent/payment needed": PRE_PRODUCTION_COPY,
+  "order received": {
+    ...PRE_PRODUCTION_COPY,
+    heroSub: "We've just received your order — thank you for choosing Oxify. Our team will now begin processing it.",
+  },
+  "po sent/payment needed": {
+    ...PRE_PRODUCTION_COPY,
+    heroSub: "Our team is finalizing your order details and processing your order with the factory.",
+  },
   "in production": {
     heroHeadline: "Your chamber is in production",
-    heroSub: "Our manufacturing team has started building your unit.",
+    heroSub: "Your chamber is now on the production line, where it will be built, assembled and tested.",
     whatHappensNext:
       "Right now your chamber is being manufactured to your exact configuration. Once production wraps, it'll be prepared for shipping. We'll update this page automatically as it moves through each stage.",
   },
   "ready to ship": {
     heroHeadline: "Your chamber is being prepared to ship",
-    heroSub: "Production is complete and your unit is being packed for its journey.",
+    heroSub: "Your order is ready to ship. Our logistics team is now preparing the shipment details.",
     whatHappensNext:
       "Your chamber has finished production and is now being packed and prepared for shipping. Once it ships, you'll see its progress update here.",
   },
   "in transit": {
     heroHeadline: "Your chamber is in transit",
-    heroSub: "It's on its way to the United States.",
+    heroSub: "Your order is on its way to you. Our team will send you the tracking information.",
     whatHappensNext:
       "Your chamber is currently in transit. Once it arrives in the U.S., it'll move into customs clearance. We'll update your status as soon as it lands.",
   },
   "customs clearance": {
     heroHeadline: "Your chamber has arrived in the U.S. and is clearing customs",
-    heroSub: "It's currently being processed through U.S. customs.",
+    heroSub: "Your order is now going through customs clearance — a stage that's handled by customs and outside of our control.",
     whatHappensNext:
       "Your chamber has landed in the U.S. and is now going through customs clearance. This step is handled entirely by our freight and customs team. Once it clears, we'll move it toward your Premium White Glove delivery.",
   },
   "delivery scheduled": {
     heroHeadline: "Your Premium White Glove delivery is being scheduled",
-    heroSub: "Our team is coordinating your delivery date and window.",
+    heroSub: "Your order is now being scheduled for delivery.",
     whatHappensNext:
       "Your chamber is close by and we're finalizing your Premium White Glove delivery appointment — including date, arrival window, and any access details we need from you. {coord} will reach out directly to confirm.",
   },
   delivered: {
     heroHeadline: "You're all set!",
-    heroSub: "Your chamber is installed and ready. Overcome anything. Achieve everything.",
+    heroSub: "Your order has been delivered. Overcome anything. Achieve everything.",
     whatHappensNext:
       "Your chamber has been delivered and installed, and your training is complete. You're ready to begin using your chamber. If you have any questions along the way, {coord} is just a message or call away.",
   },
