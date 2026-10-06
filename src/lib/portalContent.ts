@@ -76,7 +76,8 @@ export function deliveryFor(method: string, softChamber = false): Delivery {
 
 // The customer journey, in order. `status` MUST exactly match (lowercase) a
 // native ClickUp status on the OXFY ORDER STATUS CRM list. `tip` is the
-// milestone hover description (hard chambers, Premium for Setup & Training);
+// milestone hover description — owner-approved (Oct 2026); change only on
+// request. `tip` covers hard chambers (Premium for Setup & Training);
 // `tipSoft` / `tipRemote` replace it for soft chambers / hard chambers
 // without on-site installation — see stepTip(). Production and shipping
 // wording follows Morelli's portal, which shows customers no lead times.
@@ -85,13 +86,13 @@ export const JOURNEY = [
     status: "in production",
     label: "In Production",
     icon: "production",
-    tip: "Your chamber is on the production line. The shell is produced, then the machinery and all electrical components are assembled. After that it goes through testing — sometimes a chamber needs additional testing to make sure it arrives 100% working.",
+    tip: "Your chamber is on the production line. The shell is produced, then the machinery and all electrical components are assembled. After that it goes through testing, sometimes extra testing to make sure it arrives 100% working.",
   },
   {
     status: "ready to ship",
     label: "Ready to Ship",
     icon: "box",
-    tip: "Production is complete. The production team is packing your chamber and preparing it for shipment.",
+    tip: "Production is complete. Your chamber is being packed and prepared for shipment.",
   },
   {
     status: "in transit",
@@ -103,28 +104,28 @@ export const JOURNEY = [
     status: "customs clearance",
     label: "Clearing Customs",
     icon: "customs",
-    tip: "Once your chamber arrives in the United States, it's sorted and goes through customs clearance — basically a U.S. inspection. We don't have control over the package once it reaches U.S. customs.",
+    tip: "Once your chamber arrives in the U.S., it's sorted and goes through customs inspection. Please know that this step is outside our control.",
   },
   {
     status: "delivery scheduled",
     label: "Delivery Scheduled",
     icon: "calendar",
-    tip: "Our logistics team is booking the truck and finalizing your white-glove delivery: date, arrival window and access details.",
+    tip: "After customs clearance, your chamber will be sent to our white glove team and they will finalize your delivery: date, arrival window and access details.",
     tipSoft: "Your chamber ships to you by DHL or FedEx. You'll receive tracking details so you can follow each package to your door.",
   },
   {
     status: "installation scheduling",
     label: "Setup & Training",
     icon: "technician",
-    tip: "A certified technician will schedule a visit to install your chamber and give you hands-on training.",
-    tipRemote: "Our technician will schedule a remote call to walk you through the connections, basic setup and how to operate your chamber.",
-    tipSoft: "Once all your packages have arrived, we'll schedule a technician to visit and install your chamber for you.",
+    tip: "We will schedule a certified technician to visit you and install your chamber and give you hands-on training.",
+    tipRemote: "We will schedule a remote call for you with our technician to walk you through the connections, basic setup and how to operate your chamber.",
+    tipSoft: "Once all your packages have arrived, we'll schedule a technician to install your chamber for you.",
   },
   {
     status: "delivered",
     label: "Delivered",
     icon: "home",
-    tip: "Your chamber is delivered and set up — you're ready to begin your sessions.",
+    tip: "Your chamber is delivered and set up, you're ready to begin your sessions.",
   },
 ] as const;
 
