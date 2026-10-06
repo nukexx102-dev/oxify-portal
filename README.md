@@ -16,7 +16,7 @@ Zapier integration). The journey follows that list's statuses:
 ```
 order received / po sent/payment needed  (before production — no step lit yet)
 → in production → ready to ship → in transit → customs clearance
-→ delivery scheduled → delivered          (exceptions: cancelled, refunded)
+→ delivery scheduled → installation scheduling → delivered   (exceptions: cancelled, refunded)
 ```
 
 Fields are matched **by name**, so renaming one in ClickUp hides it from

@@ -57,10 +57,16 @@ export const JOURNEY = [
     tip: "The logistics team is booking a truck, arranging pickup of your chamber, and finalizing your Premium White Glove delivery appointment — date, arrival window, and access details.",
   },
   {
+    status: "installation scheduling",
+    label: "Installation Scheduling",
+    icon: "technician",
+    tip: "Hard chambers: our crew brings your chamber inside and places it, and a certified technician completes the full installation and hands-on training within about 2 days. Soft chambers: our crew confirms every package, then returns the next day to set it up, install it, and train you on site.",
+  },
+  {
     status: "delivered",
     label: "Delivered & Installed",
     icon: "home",
-    tip: "Hard chambers: our crew brings your chamber inside and places it, and a certified technician completes the full installation and hands-on training within about 2 days. Soft chambers: our crew confirms every package, then returns the next day to set it up, install it, and train you on site.",
+    tip: "Your chamber is installed and you've been walked through hands-on training — you're ready to begin your sessions.",
   },
 ] as const;
 
@@ -69,7 +75,7 @@ export const JOURNEY = [
 export const JOURNEY_PHASES = [
   { title: "Production", statuses: ["in production", "ready to ship"] },
   { title: "Shipping & customs", statuses: ["in transit", "customs clearance"] },
-  { title: "Premium White Glove delivery", statuses: ["delivery scheduled", "delivered"] },
+  { title: "Premium White Glove delivery", statuses: ["delivery scheduled", "installation scheduling", "delivered"] },
 ];
 
 // Before production starts — the rail shows no current step yet. Both
@@ -80,7 +86,9 @@ export const EXCEPTION_STATUSES = new Set(["cancelled", "refunded"]);
 
 export type StatusCopy = { heroHeadline: string; heroSub: string; whatHappensNext: string };
 
-// Default copy per status, adapted from Morelli's "Portal Status Copy" rows.
+// Default copy per status. Headlines and the line under them are the owner's
+// approved table (Oct 2026) — change them only on request. The "What happens
+// next" text is adapted from Morelli's "Portal Status Copy" rows.
 // If CLICKUP_STATUS_COPY_LIST_ID is set, a matching row in that ClickUp list
 // overrides these (see getStatusCopy in clickup.ts). "{coord}" is replaced
 // with the order specialist's first name.
@@ -94,7 +102,7 @@ const PRE_PRODUCTION_COPY: StatusCopy = {
 export const STATUS_COPY: Record<string, StatusCopy> = {
   "order received": {
     ...PRE_PRODUCTION_COPY,
-    heroSub: "We've just received your order — thank you for choosing Oxify. Our team will now begin processing it.",
+    heroSub: "We've just received your order — thank you for choosing Oxify. Our team will now begin to process your order!",
   },
   "po sent/payment needed": {
     ...PRE_PRODUCTION_COPY,
@@ -108,19 +116,19 @@ export const STATUS_COPY: Record<string, StatusCopy> = {
   },
   "ready to ship": {
     heroHeadline: "Your chamber is being prepared to ship",
-    heroSub: "Your order is ready to ship. Our logistics team is now preparing the shipment details.",
+    heroSub: "Your order is ready to ship! Our logistics team is now preparing the shipment details.",
     whatHappensNext:
       "Your chamber has finished production and is now being packed and prepared for shipping. Once it ships, you'll see its progress update here.",
   },
   "in transit": {
     heroHeadline: "Your chamber is in transit",
-    heroSub: "Your order is on its way to you. Our team will send you the tracking information.",
+    heroSub: "Your order is on its way to you!",
     whatHappensNext:
       "Your chamber is currently in transit. Once it arrives in the U.S., it'll move into customs clearance. We'll update your status as soon as it lands.",
   },
   "customs clearance": {
     heroHeadline: "Your chamber has arrived in the U.S. and is clearing customs",
-    heroSub: "Your order is now going through customs clearance — a stage that's handled by customs and outside of our control.",
+    heroSub: "Your order is now going through customs clearance.",
     whatHappensNext:
       "Your chamber has landed in the U.S. and is now going through customs clearance. This step is handled entirely by our freight and customs team. Once it clears, we'll move it toward your Premium White Glove delivery.",
   },
@@ -130,9 +138,15 @@ export const STATUS_COPY: Record<string, StatusCopy> = {
     whatHappensNext:
       "Your chamber is close by and we're finalizing your Premium White Glove delivery appointment — including date, arrival window, and any access details we need from you. {coord} will reach out directly to confirm.",
   },
+  "installation scheduling": {
+    heroHeadline: "Technician Scheduling",
+    heroSub: "We are currently finalizing the technician's schedule to guide you on your setup!",
+    whatHappensNext:
+      "Your chamber has been delivered, and we're finalizing your certified technician's visit to complete the installation and walk you through hands-on training. {coord} will reach out to confirm the date and time.",
+  },
   delivered: {
     heroHeadline: "You're all set!",
-    heroSub: "Your order has been delivered. Overcome anything. Achieve everything.",
+    heroSub: "Your order was delivered! Any questions or concerns, please let us know!",
     whatHappensNext:
       "Your chamber has been delivered and installed, and your training is complete. You're ready to begin using your chamber. If you have any questions along the way, {coord} is just a message or call away.",
   },
