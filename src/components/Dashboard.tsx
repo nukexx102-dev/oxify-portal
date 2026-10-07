@@ -445,8 +445,16 @@ export default function Dashboard({ data, onReset }: Props) {
 
       {/* ETA cards */}
       <section className="grid grid-cols-1 gap-4 pt-4 min-[720px]:grid-cols-2">
-        <EtaCard label="Arrives in the U.S." value={order.etaUs} />
-        <EtaCard label="Arrives at your door" value={order.etaDoor} />
+        <EtaCard
+          label="Arrives in the U.S."
+          value={order.etaUs}
+          note="Estimated arrival at a U.S. port. We'll keep this updated as your chamber travels."
+        />
+        <EtaCard
+          label="Arrives at your door"
+          value={order.etaDoor}
+          note="Your estimated delivery date. We'll confirm the exact day and time with you."
+        />
       </section>
 
       {/* Documents */}
@@ -800,7 +808,8 @@ function ModelShowcase({
   );
 }
 
-function EtaCard({ label, value }: { label: string; value: string | null }) {
+// `note` shows under a set date; with no date yet the card reads "TBD".
+function EtaCard({ label, value, note }: { label: string; value: string | null; note: string }) {
   return (
     <div className={`${panel} flex flex-col gap-2.5 px-5 pb-[22px] pt-5 min-[720px]:px-[26px] min-[720px]:pb-[26px] min-[720px]:pt-6`}>
       <span className={`${eyebrow} text-muted`}>{label}</span>
@@ -813,7 +822,7 @@ function EtaCard({ label, value }: { label: string; value: string | null }) {
         {value ?? "TBD"}
       </span>
       <span className="text-[13px] leading-[1.45] text-muted">
-        {value ? "Subject to change." : "We'll update this once it's confirmed."}
+        {value ? note : "We'll update this once it's confirmed."}
       </span>
     </div>
   );
