@@ -303,6 +303,59 @@ export default function Dashboard({ data, onReset }: Props) {
         />
       )}
 
+      {/* Balance due — between the chamber showcase and Order Details, only
+          once it's actually blocking delivery. */}
+      {showBalanceDue && (
+        <section className="mt-4 rounded-2xl border border-danger/35 bg-danger/8 px-5 py-[22px] min-[720px]:px-[26px]">
+          <div className="mb-2 flex items-center gap-2.5 text-danger">
+            <Icon name="alert" size={18} strokeWidth={1.8} />
+            <h2 className="text-[17px] font-medium tracking-[-0.2px] text-ink">Complete your remaining balance</h2>
+          </div>
+          <p className="max-w-[62ch] text-[14px] font-light leading-[1.7] text-body">
+            {order.remainingBalance != null
+              ? `You have a remaining balance of $${order.remainingBalance.toLocaleString("en-US")}. `
+              : "You have a remaining balance on this order. "}
+            Completing it lets us move your chamber on to the next step.
+          </p>
+          <div className="mt-4 flex flex-wrap gap-2.5">
+            {/* Pay now only when the order's "💰 Link - Remaining Balance" field has a link. */}
+            {order.remainingBalanceLink && (
+              <a
+                href={order.remainingBalanceLink}
+                target="_blank"
+                rel="noopener noreferrer"
+                className="inline-flex min-h-11 items-center gap-2 rounded-[10px] bg-accent px-5 text-[13.5px] font-semibold text-on-accent transition-all hover:-translate-y-px hover:bg-accent-hover hover:shadow-[0_0_0_1px_rgba(205,181,132,.95),0_0_18px_rgba(205,181,132,.6)]"
+              >
+                Pay now
+                <Icon name="arrowRight" size={14} strokeWidth={2} />
+              </a>
+            )}
+            <a
+              href={`mailto:${CONTACT.email}`}
+              className="inline-flex min-h-11 items-center rounded-[10px] border border-accent/35 px-5 text-[13.5px] font-medium text-body transition-colors hover:border-accent hover:text-ink"
+            >
+              Message us
+            </a>
+            <a
+              href={`tel:${CONTACT.phoneTel}`}
+              className="inline-flex min-h-11 items-center gap-1.5 rounded-[10px] border border-accent/35 px-5 text-[13.5px] font-medium text-body tabular-nums transition-colors hover:border-accent hover:text-ink"
+            >
+              Call now
+              <span className="font-semibold text-accent">{CONTACT.phoneDisplay}</span>
+            </a>
+          </div>
+        </section>
+      )}
+      {showSplitPayments && (
+        <section className={`${panel} mt-4 px-5 py-[22px] min-[720px]:px-[26px]`}>
+          <h2 className="mb-2 text-[17px] font-medium tracking-[-0.2px] text-ink">Payment schedule</h2>
+          <p className="max-w-[62ch] text-[14px] font-light leading-[1.7] text-body">
+            Your order is on a split payment schedule. Reach out any time for your next payment date and amount.
+          </p>
+        </section>
+      )}
+
+
       {/* Order details — right under the headline so a customer can confirm
           early that this is their order. Collapsed by default. */}
       <section className={`${panel} mt-4 px-5 pb-5 pt-[22px] min-[720px]:px-[30px] min-[720px]:pb-[26px] min-[720px]:pt-7`}>
@@ -357,48 +410,6 @@ export default function Dashboard({ data, onReset }: Props) {
       {photos.length > 0 && <PhotoCarousel photos={photos} />}
 
       <JourneyPanel currentStepIndex={currentStepIndex} delivery={delivery} />
-
-      {/* Balance due — only once it's actually blocking delivery */}
-      {showBalanceDue && (
-        <section className="mt-4 rounded-2xl border border-danger/35 bg-danger/8 px-5 py-[22px] min-[720px]:px-[26px]">
-          <div className="mb-2 flex items-center gap-2.5 text-danger">
-            <Icon name="alert" size={18} strokeWidth={1.8} />
-            <h2 className="text-[17px] font-medium tracking-[-0.2px] text-ink">Complete your remaining balance</h2>
-          </div>
-          <p className="max-w-[62ch] text-[14px] font-light leading-[1.7] text-body">
-            {order.remainingBalance != null
-              ? `You have a remaining balance of $${order.remainingBalance.toLocaleString("en-US")}. `
-              : "You have a remaining balance on this order. "}
-            Completing it lets us move your chamber on to the next step.
-          </p>
-          <div className="mt-4 flex flex-wrap gap-2.5">
-            {order.remainingBalanceLink && (
-              <a
-                href={order.remainingBalanceLink}
-                target="_blank"
-                rel="noopener noreferrer"
-                className="inline-flex min-h-11 items-center rounded-[10px] bg-accent px-5 text-[13.5px] font-semibold text-on-accent transition-all hover:-translate-y-px hover:bg-accent-hover hover:shadow-[0_0_0_1px_rgba(205,181,132,.95),0_0_18px_rgba(205,181,132,.6)]"
-              >
-                Pay now
-              </a>
-            )}
-            <a
-              href={`mailto:${CONTACT.email}`}
-              className="inline-flex min-h-11 items-center rounded-[10px] border border-accent/35 px-5 text-[13.5px] font-medium text-body transition-colors hover:border-accent hover:text-ink"
-            >
-              Questions? Email us
-            </a>
-          </div>
-        </section>
-      )}
-      {showSplitPayments && (
-        <section className={`${panel} mt-4 px-5 py-[22px] min-[720px]:px-[26px]`}>
-          <h2 className="mb-2 text-[17px] font-medium tracking-[-0.2px] text-ink">Payment schedule</h2>
-          <p className="max-w-[62ch] text-[14px] font-light leading-[1.7] text-body">
-            Your order is on a split payment schedule. Reach out any time for your next payment date and amount.
-          </p>
-        </section>
-      )}
 
       {/* What happens next + coordinator */}
       <section className="grid grid-cols-1 gap-4 pt-4 min-[900px]:grid-cols-[1.55fr_1fr]">
