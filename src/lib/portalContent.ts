@@ -118,7 +118,7 @@ export const JOURNEY = [
     label: "Setup & Training",
     icon: "technician",
     tip: "We will schedule a certified technician to visit you and install your chamber and give you hands-on training.",
-    tipRemote: "We will schedule a remote call for you with our technician to walk you through the connections, basic setup and how to operate your chamber.",
+    tipRemote: "We will schedule a remote call for you with a technician to walk you through the connections, basic setup and how to operate your chamber.",
     tipSoft: "Once all your packages have arrived, we'll schedule a technician to install your chamber for you.",
   },
   {
@@ -174,7 +174,7 @@ export const INSTALL_REMOTE_COPY: StatusCopy = {
   heroHeadline: "Setup Scheduling",
   heroSub: "We're scheduling your phone or video session to help you get set up!",
   whatHappensNext:
-    "Your chamber has been delivered. Next, our team will schedule a remote call with our technician to walk you through the equipment connections, basic setup and how to operate your chamber. Please let us know your availability for the remote call.",
+    "Your chamber has been delivered. Next, our team will schedule a remote call with a technician to walk you through the equipment connections, basic setup and how to operate your chamber. Please let us know your availability for the remote call.",
 };
 
 // Soft chambers: shipped by DHL / FedEx, then always installed on-site by a

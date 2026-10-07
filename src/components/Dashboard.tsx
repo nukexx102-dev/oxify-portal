@@ -446,14 +446,14 @@ export default function Dashboard({ data, onReset }: Props) {
       {/* ETA cards */}
       <section className="grid grid-cols-1 gap-4 pt-4 min-[720px]:grid-cols-2">
         <EtaCard
-          label="Arrives in the U.S."
+          label="Estimated arrival in the U.S."
           value={order.etaUs}
-          note="Estimated arrival at a U.S. port. We'll keep this updated as your chamber travels."
+          note="We'll keep this updated as your chamber travels."
         />
         <EtaCard
-          label="Arrives at your door"
+          label="Estimated arrival at your door"
           value={order.etaDoor}
-          note="Your estimated delivery date. We'll confirm the exact day and time with you."
+          note="We'll confirm the exact day and time with you."
         />
       </section>
 
