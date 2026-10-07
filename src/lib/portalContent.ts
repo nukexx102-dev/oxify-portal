@@ -184,7 +184,7 @@ export const SOFT_STATUS_COPY: Record<string, StatusCopy> = {
     heroHeadline: "Your DHL / FedEx delivery is being scheduled",
     heroSub: "Your order is now being scheduled for delivery.",
     whatHappensNext:
-      "Your chamber is on its way to you by DHL or FedEx and may arrive in several packages. You'll receive tracking details so you can follow each one to your door. Once everything has arrived, we'll schedule your technician's installation visit.",
+      "Your chamber is on its way to you by DHL or FedEx and may arrive in several packages. You'll receive tracking details so you can follow each one to your door. Once everything has arrived, we'll schedule a technician's installation visit.",
   },
   "installation scheduling": {
     heroHeadline: "Technician Scheduling",
