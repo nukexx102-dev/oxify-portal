@@ -2,6 +2,7 @@
 
 import { useEffect, useRef, useState } from "react";
 import Image from "next/image";
+import ThemeToggle from "@/components/ThemeToggle";
 import type { DashboardData } from "@/lib/clickup";
 import {
   CONTACT,
@@ -49,6 +50,16 @@ const ICONS = {
 
 type IconName = keyof typeof ICONS;
 
+// The white logo on the dark theme, the dark logo on the light theme.
+export function Logo({ className, priority }: { className: string; priority?: boolean }) {
+  return (
+    <>
+      <Image src="/oxify-logo-white.png" alt="Oxify" width={1000} height={359} priority={priority} className={`${className} light:hidden`} />
+      <Image src="/oxify-logo-dark.png" alt="Oxify" width={1000} height={359} priority={priority} className={`${className} hidden light:block`} />
+    </>
+  );
+}
+
 function Icon({ name, size = 20, strokeWidth = 1.6, className }: { name: IconName; size?: number; strokeWidth?: number; className?: string }) {
   return (
     <svg
@@ -73,7 +84,7 @@ function Icon({ name, size = 20, strokeWidth = 1.6, className }: { name: IconNam
 // Earlier statuses don't nag the customer yet.
 const BALANCE_DUE_STATUSES = new Set(["ready to ship", "in transit", "customs clearance", "delivery scheduled"]);
 
-const panel = "rounded-2xl border border-line bg-panel backdrop-blur-md";
+const panel = "ox-card ox-reveal rounded-2xl border border-line bg-panel shadow-(--shadow-panel)";
 const eyebrow = "text-[10px] font-semibold uppercase tracking-[1.8px]";
 
 function firstName(name: string | null): string | null {
@@ -118,7 +129,10 @@ export default function Dashboard({ data, onReset }: Props) {
     return (
       <main className="flex min-h-full flex-1 flex-col items-center justify-center px-6 py-16">
         <div className="flex w-full max-w-md flex-col items-center gap-6 text-center">
-          <Image src="/oxify-logo-white.png" alt="Oxify" width={1000} height={359} className="h-[34px] w-auto" />
+          <div className="fixed right-[18px] top-[18px] z-40">
+            <ThemeToggle />
+          </div>
+          <Logo className="h-[34px] w-auto" />
           <h1 className="text-[30px] font-semibold leading-tight tracking-[-0.8px] text-ink">{fill(copy.heroHeadline)}</h1>
           <p className="text-[15px] font-light text-body">{fill(copy.heroSub)}</p>
           <p className={`${panel} p-6 text-left text-[14px] font-light leading-[1.7] text-body`}>{fill(copy.whatHappensNext)}</p>
@@ -223,20 +237,25 @@ export default function Dashboard({ data, onReset }: Props) {
   return (
     <main className="mx-auto w-full max-w-[1080px] flex-1 px-[18px] pb-[72px] min-[720px]:px-10">
       {/* Header */}
-      <header className="flex flex-col items-start gap-4 pb-5 pt-[22px] min-[720px]:flex-row min-[720px]:items-center min-[720px]:justify-between min-[720px]:gap-6 min-[720px]:pb-[30px] min-[720px]:pt-[34px]">
-        <Image src="/oxify-logo-white.png" alt="Oxify" width={1000} height={359} priority className="h-7 w-auto min-[720px]:h-[34px]" />
-        <div className="flex flex-col gap-1 min-[720px]:items-end">
-          <span className="text-[14px] font-semibold text-ink">{order.customerName}</span>
-          <span className="text-[12px] text-muted tabular-nums">Order {order.orderNumber}</span>
+      <header className="ox-reveal flex flex-col items-start gap-4 pb-5 pt-[22px] min-[720px]:flex-row min-[720px]:items-center min-[720px]:justify-between min-[720px]:gap-6 min-[720px]:pb-[30px] min-[720px]:pt-[34px]">
+        <Logo priority className="h-7 w-auto min-[720px]:h-[34px]" />
+        <div className="flex w-full items-center justify-between gap-5 min-[720px]:w-auto">
+          <div className="flex flex-col gap-1 min-[720px]:items-end">
+            <span className="text-[14px] font-semibold text-ink">{order.customerName}</span>
+            <span className="text-[12px] text-muted tabular-nums">Order {order.orderNumber}</span>
+          </div>
+          <ThemeToggle labels="desktop" />
         </div>
       </header>
 
       {/* Status row */}
-      <div className="flex flex-wrap items-center justify-between gap-4">
+      <div className="ox-reveal flex flex-wrap items-center justify-between gap-4">
         <span
           className={
-            "inline-flex items-center gap-2 rounded-full border py-1.5 pl-[11px] pr-[14px] " +
-            (status.tone === "warning" ? "border-warning/35 bg-warning/8" : "border-accent/35 bg-accent/8")
+            "ox-ring inline-flex items-center gap-2 rounded-full border py-1.5 pl-[11px] pr-[14px] " +
+            (status.tone === "warning"
+              ? "border-warning/35 bg-warning/8 [--ring-fill:color-mix(in_srgb,var(--color-warning)_8%,var(--color-canvas))]"
+              : "border-accent/35 bg-accent/8 [--ring-fill:color-mix(in_srgb,var(--color-accent)_8%,var(--color-canvas))]")
           }
         >
           <span
@@ -251,7 +270,7 @@ export default function Dashboard({ data, onReset }: Props) {
         </span>
         <div className="flex flex-wrap items-center gap-3.5">
           <span className="inline-flex items-center gap-[7px] text-muted">
-            <Icon name="refresh" size={13} strokeWidth={1.9} />
+            <Icon name="refresh" size={13} strokeWidth={1.9} className="ox-spin-once" />
             <span className="text-[11.5px] tabular-nums">Last checked {lastChecked}</span>
           </span>
           <button
@@ -266,7 +285,7 @@ export default function Dashboard({ data, onReset }: Props) {
 
       {/* Delay notice — only when ops has flagged this order */}
       {isDelayed && (
-        <div className="mt-4 flex items-start gap-3 rounded-2xl border border-warning/30 bg-warning/8 p-4">
+        <div className="ox-reveal mt-4 flex items-start gap-3 rounded-2xl border border-warning/30 bg-warning/8 p-4">
           <span className="mt-0.5 text-warning">
             <Icon name="alert" size={18} strokeWidth={1.8} />
           </span>
@@ -285,7 +304,7 @@ export default function Dashboard({ data, onReset }: Props) {
       )}
 
       {/* Hero */}
-      <section className="pb-1 pt-5 min-[720px]:pb-3 min-[720px]:pt-7">
+      <section className="ox-reveal pb-1 pt-5 min-[720px]:pb-3 min-[720px]:pt-7">
         <h1 className="mb-4 max-w-[15ch] text-balance text-[32px] font-semibold leading-[1.04] tracking-[-1px] text-ink min-[720px]:text-[52px] min-[720px]:tracking-[-2px]">
           {fill(copy.heroHeadline)}
         </h1>
@@ -306,7 +325,7 @@ export default function Dashboard({ data, onReset }: Props) {
       {/* Balance due — between the chamber showcase and Order Details, only
           once it's actually blocking delivery. */}
       {showBalanceDue && (
-        <section className="mt-4 rounded-2xl border border-danger/35 bg-danger/8 px-5 py-[22px] min-[720px]:px-[26px]">
+        <section className="ox-reveal mt-4 rounded-2xl border border-danger/35 bg-danger/8 px-5 py-[22px] min-[720px]:px-[26px]">
           <div className="mb-2 flex items-center gap-2.5 text-danger">
             <Icon name="alert" size={18} strokeWidth={1.8} />
             <h2 className="text-[17px] font-medium tracking-[-0.2px] text-ink">Complete your remaining balance</h2>
@@ -324,7 +343,7 @@ export default function Dashboard({ data, onReset }: Props) {
                 href={order.remainingBalanceLink}
                 target="_blank"
                 rel="noopener noreferrer"
-                className="inline-flex min-h-11 items-center gap-2 rounded-[10px] bg-accent px-5 text-[13.5px] font-semibold text-on-accent transition-all hover:-translate-y-px hover:bg-accent-hover hover:shadow-[0_0_0_1px_rgba(205,181,132,.95),0_0_18px_rgba(205,181,132,.6)]"
+                className="ox-sheen inline-flex min-h-11 items-center gap-2 rounded-[10px] bg-accent-fill px-5 text-[13.5px] font-semibold text-on-accent transition-all hover:-translate-y-px hover:bg-accent-fill-hover hover:shadow-[0_0_0_1px_rgba(205,181,132,calc(.95*var(--glow-k))),0_0_18px_rgba(205,181,132,calc(.6*var(--glow-k)))]"
               >
                 Pay now
                 <Icon name="arrowRight" size={14} strokeWidth={2} />
@@ -332,13 +351,13 @@ export default function Dashboard({ data, onReset }: Props) {
             )}
             <a
               href={`mailto:${CONTACT.email}`}
-              className="inline-flex min-h-11 items-center rounded-[10px] border border-accent/35 px-5 text-[13.5px] font-medium text-body transition-colors hover:border-accent hover:text-ink"
+              className="ox-ripple inline-flex min-h-11 items-center rounded-[10px] border border-accent/35 px-5 text-[13.5px] font-medium text-body transition-colors hover:border-accent hover:text-ink"
             >
               Message us
             </a>
             <a
               href={`tel:${CONTACT.phoneTel}`}
-              className="inline-flex min-h-11 items-center gap-1.5 rounded-[10px] border border-accent/35 px-5 text-[13.5px] font-medium text-body tabular-nums transition-colors hover:border-accent hover:text-ink"
+              className="ox-ripple inline-flex min-h-11 items-center gap-1.5 rounded-[10px] border border-accent/35 px-5 text-[13.5px] font-medium text-body tabular-nums transition-colors hover:border-accent hover:text-ink"
             >
               Call now
               <span className="font-semibold text-accent">{CONTACT.phoneDisplay}</span>
@@ -421,14 +440,18 @@ export default function Dashboard({ data, onReset }: Props) {
           <div className="mb-[22px] flex items-center gap-[13px]">
             {order.coordinatorPhotoUrl ? (
               // A small external avatar — not worth a next/image remote-pattern entry for one host.
-              // eslint-disable-next-line @next/next/no-img-element
-              <img
-                src={order.coordinatorPhotoUrl}
-                alt={order.coordinatorName ?? "Your order specialist"}
-                className="h-11 w-11 flex-none rounded-full border border-accent/35 object-cover"
-              />
+              // Wrapped so the gold ring light travels around the photo too;
+              // the 1.5px padding leaves the rim visible.
+              <span className="ox-ring h-11 w-11 flex-none rounded-full border border-accent/35 bg-avatar p-[1.5px] [--ring-fill:var(--color-avatar)]">
+                {/* eslint-disable-next-line @next/next/no-img-element */}
+                <img
+                  src={order.coordinatorPhotoUrl}
+                  alt={order.coordinatorName ?? "Your order specialist"}
+                  className="h-full w-full rounded-full object-cover"
+                />
+              </span>
             ) : (
-              <div className="grid h-11 w-11 flex-none place-items-center rounded-full border border-accent/35 bg-[#121722] text-[16px] font-semibold text-accent">
+              <div className="ox-ring grid h-11 w-11 flex-none place-items-center rounded-full border border-accent/35 bg-avatar [--ring-fill:var(--color-avatar)] text-[16px] font-semibold text-accent">
                 {order.coordinatorInitials ?? "OX"}
               </div>
             )}
@@ -467,10 +490,10 @@ export default function Dashboard({ data, onReset }: Props) {
           A little reading before delivery day makes your first session feel effortless. These stay in your portal for good.
         </p>
         <div className="grid grid-cols-1 gap-3 min-[720px]:grid-cols-2">
-          {documents.map((doc) => {
+          {documents.map((doc, idx) => {
             const body = (
               <>
-                <span className="grid h-10 w-10 flex-none place-items-center rounded-[11px] border border-line-strong bg-tile text-accent">
+                <span className="ox-docicon grid h-10 w-10 flex-none place-items-center rounded-[11px] border border-line-strong bg-tile text-accent">
                   <Icon name={doc.icon} size={18} />
                 </span>
                 <span className="flex min-w-0 flex-col gap-[5px]">
@@ -480,7 +503,7 @@ export default function Dashboard({ data, onReset }: Props) {
                     <span
                       className={
                         "inline-block rounded-full px-[9px] py-[3px] text-[10.5px] font-semibold uppercase tracking-[0.6px] " +
-                        (doc.href ? "bg-accent/12 text-accent" : "bg-[#161b26] text-muted")
+                        (doc.href ? "bg-accent/12 text-accent" : "bg-badge text-muted")
                       }
                     >
                       {doc.href ? "View document" : "Coming soon"}
@@ -489,19 +512,20 @@ export default function Dashboard({ data, onReset }: Props) {
                 </span>
               </>
             );
-            const cls = "flex items-start gap-3.5 rounded-[14px] border border-line bg-doc px-[18px] pb-5 pt-[18px] transition-all duration-200";
+            const cls = "ox-pop ox-sweep flex items-start gap-3.5 rounded-[14px] border border-line bg-doc px-[18px] pb-5 pt-[18px] transition-all duration-200";
             return doc.href ? (
               <a
                 key={doc.title}
                 href={doc.href}
+                style={{ "--gd": `${200 + idx * 110}ms` } as React.CSSProperties}
                 target="_blank"
                 rel="noopener noreferrer"
-                className={`${cls} hover:border-accent/60 hover:shadow-[0_0_26px_rgba(205,181,132,0.25)]`}
+                className={`${cls} hover:-translate-y-0.5 hover:border-accent/60 hover:shadow-[0_0_26px_rgba(205,181,132,calc(0.25*var(--glow-k)))]`}
               >
                 {body}
               </a>
             ) : (
-              <div key={doc.title} className={cls} aria-disabled="true">
+              <div key={doc.title} className={cls} style={{ "--gd": `${200 + idx * 110}ms` } as React.CSSProperties} aria-disabled="true">
                 {body}
               </div>
             );
@@ -521,13 +545,13 @@ function ContactButtons({ coordFirst }: { coordFirst: string | null }) {
     <div className="flex w-full flex-col gap-2.5">
       <a
         href={`mailto:${CONTACT.email}`}
-        className="flex min-h-12 w-full items-center justify-center rounded-[10px] bg-accent px-3.5 py-[11px] text-[13.5px] font-semibold tracking-[0.1px] text-on-accent transition-all duration-200 hover:-translate-y-px hover:bg-accent-hover hover:shadow-[0_0_0_1px_rgba(205,181,132,.95),0_0_18px_rgba(205,181,132,.6),0_0_42px_rgba(205,181,132,.35)] min-[720px]:min-h-11"
+        className="ox-sheen flex min-h-12 w-full items-center justify-center rounded-[10px] bg-accent-fill px-3.5 py-[11px] text-[13.5px] font-semibold tracking-[0.1px] text-on-accent transition-all duration-200 hover:-translate-y-px hover:bg-accent-fill-hover hover:shadow-[0_0_0_1px_rgba(205,181,132,calc(.95*var(--glow-k))),0_0_18px_rgba(205,181,132,calc(.6*var(--glow-k))),0_0_42px_rgba(205,181,132,calc(.35*var(--glow-k)))] min-[720px]:min-h-11"
       >
         {coordFirst ? `Message ${coordFirst}` : "Message us"}
       </a>
       <a
         href={`tel:${CONTACT.phoneTel}`}
-        className="flex min-h-12 w-full items-center justify-center gap-1.5 rounded-[10px] border border-accent/35 px-3.5 py-[11px] text-[13.5px] font-medium text-body tabular-nums transition-all duration-200 hover:-translate-y-px hover:border-accent hover:bg-accent/6 hover:text-ink hover:shadow-[0_0_0_1px_rgba(205,181,132,.85),0_0_18px_rgba(205,181,132,.45),0_0_40px_rgba(205,181,132,.22)] min-[720px]:min-h-11"
+        className="ox-ripple flex min-h-12 w-full items-center justify-center gap-1.5 rounded-[10px] border border-accent/35 px-3.5 py-[11px] text-[13.5px] font-medium text-body tabular-nums transition-all duration-200 hover:-translate-y-px hover:border-accent hover:bg-accent/6 hover:text-ink hover:shadow-[0_0_0_1px_rgba(205,181,132,calc(.85*var(--glow-k))),0_0_18px_rgba(205,181,132,calc(.45*var(--glow-k))),0_0_40px_rgba(205,181,132,calc(.22*var(--glow-k)))] min-[720px]:min-h-11"
       >
         <span>Call</span>
         <span className="font-semibold text-accent">{CONTACT.phoneDisplay}</span>
@@ -584,7 +608,9 @@ function JourneyPanel({ currentStepIndex, delivery }: { currentStepIndex: number
                 {i > 0 && (
                   <span
                     aria-hidden="true"
+                    style={{ "--gd": `${200 + i * 110}ms`, "--fd": `${(i - 1) * 420}ms` } as React.CSSProperties}
                     className={
+                      (currentStepIndex >= i ? "ox-grow ox-flow " : "") +
                       "ml-[23px] h-4 w-[1.5px] transition-colors duration-200 min-[720px]:ml-0 min-[720px]:mt-[23px] min-[720px]:h-[1.5px] min-[720px]:w-auto min-[720px]:flex-1 " +
                       (currentStepIndex >= i ? "bg-accent/50" : "bg-line-strong")
                     }
@@ -599,15 +625,17 @@ function JourneyPanel({ currentStepIndex, delivery }: { currentStepIndex: number
                   }
                 >
                   <span
+                    style={{ "--gd": `${250 + i * 110}ms` } as React.CSSProperties}
                     className={
-                      "grid h-12 w-12 flex-none place-items-center rounded-full border-[1.5px] transition-all duration-200 " +
+                      "ox-pop grid h-12 w-12 flex-none place-items-center rounded-full border-[1.5px] transition-all duration-200 " +
+                      (current && !open ? "ox-breathe " : "") +
                       (open
-                        ? "scale-[1.06] border-accent bg-[#141a26] text-accent shadow-[0_0_0_5px_rgba(205,181,132,.14),0_0_22px_rgba(205,181,132,.6),0_0_48px_rgba(205,181,132,.3)]"
+                        ? "scale-[1.06] border-accent bg-step text-accent shadow-[0_0_0_5px_rgba(205,181,132,calc(.14*var(--glow-k))),0_0_22px_rgba(205,181,132,calc(.6*var(--glow-k))),0_0_48px_rgba(205,181,132,calc(.3*var(--glow-k)))]"
                         : current
-                          ? "border-accent bg-[#141a26] text-accent shadow-[0_0_0_5px_rgba(205,181,132,.10),0_0_18px_rgba(205,181,132,.28)]"
+                          ? "border-accent bg-step text-accent shadow-[0_0_0_5px_rgba(205,181,132,calc(.10*var(--glow-k))),0_0_18px_rgba(205,181,132,calc(.28*var(--glow-k)))]"
                           : done
-                            ? "border-accent/45 bg-[#1b2230] text-accent"
-                            : "border-line-strong bg-[#0d1119] text-muted")
+                            ? "border-accent/45 bg-step-done text-accent"
+                            : "border-line-strong bg-step-future text-muted")
                     }
                   >
                     <Icon name={step.icon} />
@@ -623,7 +651,7 @@ function JourneyPanel({ currentStepIndex, delivery }: { currentStepIndex: number
                   <div
                     role="tooltip"
                     className={
-                      "pointer-events-none absolute left-[62px] right-0 top-[calc(100%+2px)] flex flex-col gap-[7px] rounded-xl border border-accent/35 bg-tile px-4 pb-[15px] pt-3.5 text-left shadow-[0_18px_40px_rgba(0,0,0,.55),0_0_24px_rgba(205,181,132,.12)] transition-[opacity,translate] duration-200 min-[720px]:bottom-[calc(100%+14px)] min-[720px]:top-auto min-[720px]:w-[260px] " +
+                      "pointer-events-none absolute left-[62px] right-0 top-[calc(100%+2px)] flex flex-col gap-[7px] rounded-xl border border-accent/35 bg-tooltip px-4 pb-[15px] pt-3.5 text-left shadow-[var(--shadow-tip),0_0_24px_rgba(205,181,132,calc(.12*var(--glow-k)))] transition-[opacity,translate] duration-200 min-[720px]:bottom-[calc(100%+14px)] min-[720px]:top-auto min-[720px]:w-[260px] " +
                       (edge === "left"
                         ? "min-[720px]:left-0 min-[720px]:right-auto"
                         : edge === "right"
@@ -683,8 +711,8 @@ function JourneyPanel({ currentStepIndex, delivery }: { currentStepIndex: number
                   <div
                     key={status}
                     className={
-                      "flex items-center gap-3 rounded-[10px] px-2.5 py-[9px] transition-[background-color,box-shadow] duration-200 hover:bg-accent/8 hover:shadow-[inset_0_0_0_1px_rgba(205,181,132,.4),0_0_20px_rgba(205,181,132,.2)] " +
-                      (current ? "bg-accent/6 shadow-[inset_0_0_0_1px_rgba(205,181,132,.25)]" : "")
+                      "flex items-center gap-3 rounded-[10px] px-2.5 py-[9px] transition-[background-color,box-shadow] duration-200 hover:bg-accent/8 hover:shadow-[inset_0_0_0_1px_rgba(205,181,132,calc(.4*var(--glow-k))),0_0_20px_rgba(205,181,132,calc(.2*var(--glow-k)))] " +
+                      (current ? "bg-accent/6 shadow-[inset_0_0_0_1px_rgba(205,181,132,calc(.25*var(--glow-k)))]" : "")
                     }
                   >
                     {/* Description shows only while the icon is hovered (or
@@ -694,9 +722,9 @@ function JourneyPanel({ currentStepIndex, delivery }: { currentStepIndex: number
                         type="button"
                         aria-label={`${step.label}: ${stepTip(step, delivery)}`}
                         className={
-                          "grid h-[34px] w-[34px] cursor-default place-items-center rounded-[10px] border transition-all duration-200 hover:border-accent hover:bg-accent/14 hover:text-accent hover:shadow-[0_0_0_4px_rgba(205,181,132,.12),0_0_18px_rgba(205,181,132,.5)] focus-visible:border-accent focus-visible:outline-none " +
+                          "grid h-[34px] w-[34px] cursor-default place-items-center rounded-[10px] border transition-all duration-200 hover:border-accent hover:bg-accent/14 hover:text-accent hover:shadow-[0_0_0_4px_rgba(205,181,132,calc(.12*var(--glow-k))),0_0_18px_rgba(205,181,132,calc(.5*var(--glow-k)))] focus-visible:border-accent focus-visible:outline-none " +
                           (current
-                            ? "border-accent bg-accent/14 text-accent shadow-[0_0_16px_rgba(205,181,132,.4)]"
+                            ? "border-accent bg-accent/14 text-accent shadow-[0_0_16px_rgba(205,181,132,calc(.4*var(--glow-k)))]"
                             : done
                               ? "border-accent/35 bg-tile text-accent"
                               : "border-line-strong bg-tile text-muted")
@@ -706,7 +734,7 @@ function JourneyPanel({ currentStepIndex, delivery }: { currentStepIndex: number
                       </button>
                       <span
                         role="tooltip"
-                        className="pointer-events-none absolute bottom-[calc(100%+10px)] left-0 z-30 w-[260px] max-w-[calc(100vw-56px)] translate-y-1.5 rounded-xl border border-accent/35 bg-tile px-4 pb-[15px] pt-3.5 text-[12.5px] leading-[1.55] text-body opacity-0 shadow-[0_18px_40px_rgba(0,0,0,.55),0_0_24px_rgba(205,181,132,.12)] transition-[opacity,translate] duration-200 group-hover/tip:translate-y-0 group-hover/tip:opacity-100 group-has-[:focus-visible]/tip:translate-y-0 group-has-[:focus-visible]/tip:opacity-100"
+                        className="pointer-events-none absolute bottom-[calc(100%+10px)] left-0 z-30 w-[260px] max-w-[calc(100vw-56px)] translate-y-1.5 rounded-xl border border-accent/35 bg-tooltip px-4 pb-[15px] pt-3.5 text-[12.5px] leading-[1.55] text-body opacity-0 shadow-[var(--shadow-tip),0_0_24px_rgba(205,181,132,calc(.12*var(--glow-k)))] transition-[opacity,translate] duration-200 group-hover/tip:translate-y-0 group-hover/tip:opacity-100 group-has-[:focus-visible]/tip:translate-y-0 group-has-[:focus-visible]/tip:opacity-100"
                       >
                         {stepTip(step, delivery)}
                       </span>
@@ -752,12 +780,12 @@ function ModelShowcase({
 
   return (
     <section className={`${panel} mt-4 grid grid-cols-1 overflow-hidden min-[720px]:grid-cols-[1.3fr_1fr]`}>
-      <div className="group/photo relative aspect-[4/3] overflow-hidden bg-[radial-gradient(ellipse_at_50%_35%,#1f2738_0%,#0d1119_70%)] min-[720px]:aspect-auto min-[720px]:min-h-[360px]">
-        {status === "loading" && <div className="absolute inset-0 animate-pulse bg-white/[0.03]" aria-hidden="true" />}
+      <div className="group/photo relative aspect-[4/3] overflow-hidden bg-[radial-gradient(ellipse_at_50%_35%,var(--color-stage-from)_0%,var(--color-stage-to)_var(--stage-stop))] min-[720px]:aspect-auto min-[720px]:min-h-[360px]">
+        {status === "loading" && <div className="absolute inset-0 animate-pulse bg-shimmer" aria-hidden="true" />}
         {/* Soft gold "floor" light under the chamber. */}
         <div
           aria-hidden="true"
-          className="pointer-events-none absolute bottom-[7%] left-1/2 h-[16%] w-[68%] -translate-x-1/2 rounded-[50%] bg-accent/20 blur-3xl transition-colors duration-500 group-hover/photo:bg-accent/40"
+          className="pointer-events-none absolute bottom-[7%] left-1/2 h-[16%] w-[68%] -translate-x-1/2 rounded-[50%] bg-accent/20 blur-3xl transition-colors duration-500 group-hover/photo:bg-accent/40 light:bg-accent-fill/35 light:group-hover/photo:bg-accent-fill/60"
         />
         {/* The image keeps its own proportions and is framed as a rounded
             card, so studio shots on a light background read as a photo
@@ -770,7 +798,7 @@ function ModelShowcase({
             onLoad={() => setStatus("loaded")}
             onError={() => setStatus("failed")}
             className={
-              "max-h-full max-w-full rounded-[18px] object-contain shadow-[0_0_0_1px_rgba(255,255,255,0.06),0_28px_60px_rgba(0,0,0,0.55),0_0_44px_rgba(205,181,132,0.12)] transition-[opacity,scale,box-shadow] duration-500 ease-out group-hover/photo:scale-[1.07] group-hover/photo:shadow-[0_0_0_1px_rgba(205,181,132,0.75),0_28px_60px_rgba(0,0,0,0.55),0_0_32px_rgba(205,181,132,0.55),0_0_90px_rgba(205,181,132,0.3)] " +
+              "max-h-full max-w-full rounded-[18px] object-contain shadow-[var(--photo-ring),var(--photo-drop),0_0_44px_rgba(205,181,132,calc(0.12*var(--glow-k)))] transition-[opacity,scale,box-shadow] duration-500 ease-out group-hover/photo:scale-[1.07] group-hover/photo:shadow-[0_0_0_1px_rgba(205,181,132,calc(0.75*var(--glow-k))),var(--photo-drop),0_0_32px_rgba(205,181,132,calc(0.55*var(--glow-k))),0_0_90px_rgba(205,181,132,calc(0.3*var(--glow-k)))] " +
               (status === "loaded" ? "scale-100 opacity-100" : "scale-[1.02] opacity-0")
             }
           />
@@ -792,10 +820,11 @@ function ModelShowcase({
         </div>
         {configuration.length > 0 && (
           <ul className="flex flex-wrap gap-2 border-t border-divider pt-4" aria-label="Configuration">
-            {configuration.map((item) => (
+            {configuration.map((item, idx) => (
               <li
                 key={item}
-                className="rounded-full border border-accent/30 bg-accent/6 px-3 py-[5px] text-[12px] font-medium text-ink"
+                style={{ "--gd": `${450 + idx * 110}ms` } as React.CSSProperties}
+                className="ox-pop rounded-full border border-accent/30 bg-accent/6 px-3 py-[5px] text-[12px] font-medium text-ink"
               >
                 {item}
               </li>
@@ -811,7 +840,8 @@ function ModelShowcase({
 // `note` shows under a set date; with no date yet the card reads "TBD".
 function EtaCard({ label, value, note }: { label: string; value: string | null; note: string }) {
   return (
-    <div className={`${panel} flex flex-col gap-2.5 px-5 pb-[22px] pt-5 min-[720px]:px-[26px] min-[720px]:pb-[26px] min-[720px]:pt-6`}>
+    <div className={`${panel} relative flex flex-col gap-2.5 overflow-hidden px-5 pb-[22px] pt-5 min-[720px]:px-[26px] min-[720px]:pb-[26px] min-[720px]:pt-6`}>
+      <span aria-hidden="true" className="ox-topline" />
       <span className={`${eyebrow} text-muted`}>{label}</span>
       <span
         className={
@@ -858,7 +888,7 @@ function PhotoCarousel({ photos }: { photos: Photo[] }) {
   const arrow = (enabled: boolean) =>
     "grid h-10 w-10 place-items-center rounded-full border bg-tile transition-all duration-200 " +
     (enabled
-      ? "cursor-pointer border-accent/45 text-accent hover:shadow-[0_0_0_1px_rgba(205,181,132,.55),0_0_22px_rgba(205,181,132,.35)]"
+      ? "cursor-pointer border-accent/45 text-accent hover:shadow-[0_0_0_1px_rgba(205,181,132,calc(.55*var(--glow-k))),0_0_22px_rgba(205,181,132,calc(.35*var(--glow-k)))]"
       : "cursor-default border-line text-disabled");
 
   return (
@@ -891,7 +921,7 @@ function PhotoCarousel({ photos }: { photos: Photo[] }) {
               href={photo.src}
               target="_blank"
               rel="noopener noreferrer"
-              className="relative block aspect-[4/3] w-[78%] flex-none snap-start overflow-hidden rounded-[14px] border border-line bg-[radial-gradient(ellipse_at_50%_40%,#1a2130,#0d1119_75%)] transition-all duration-200 hover:-translate-y-0.5 hover:border-accent/35 hover:shadow-[0_0_28px_rgba(205,181,132,0.25)] min-[720px]:w-[300px]"
+              className="relative block aspect-[4/3] w-[78%] flex-none snap-start overflow-hidden rounded-[14px] border border-line bg-[radial-gradient(ellipse_at_50%_40%,var(--color-stage-from),var(--color-stage-to)_75%)] transition-all duration-200 hover:-translate-y-0.5 hover:border-accent/35 hover:shadow-[0_0_28px_rgba(205,181,132,calc(0.25*var(--glow-k)))] min-[720px]:w-[300px]"
             >
               {/* eslint-disable-next-line @next/next/no-img-element -- dynamic same-origin proxy URL, not a static asset */}
               <img src={photo.src} alt={photo.alt} loading="lazy" onLoad={updateEdges} className="h-full w-full object-cover" />
@@ -901,7 +931,7 @@ function PhotoCarousel({ photos }: { photos: Photo[] }) {
         <div
           aria-hidden="true"
           className={
-            "pointer-events-none absolute -right-0.5 bottom-0 top-0 w-16 bg-gradient-to-r from-transparent to-[rgba(13,17,25,0.9)] transition-opacity duration-200 " +
+            "pointer-events-none absolute -right-0.5 bottom-0 top-0 w-16 bg-gradient-to-r from-transparent to-fade transition-opacity duration-200 " +
             (atEnd ? "opacity-0" : "opacity-100")
           }
         />

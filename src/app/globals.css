@@ -1,12 +1,25 @@
 @import "tailwindcss";
 
 /*
- * Oxify portal palette, from the Claude Design handoff: near-black canvas
- * with soft blue ambient glows, translucent panels, and a gold accent used
- * sparingly (status pill, current step, CTAs). Warning is for "your
- * shipment is delayed"; danger is reserved for "you owe money".
+ * Oxify portal palette — two themes, chosen by <html data-theme>:
+ *
+ * - "dark" (default): the original Claude Design palette. Near-black canvas
+ *   with soft blue ambient glows, translucent blurred panels.
+ * - "light": warm off-white canvas, white cards with hairline borders and
+ *   soft shadows, near-black text.
+ *
+ * Gold is split in two so light passes WCAG AA: `accent` is the gold used for
+ * text, icons and rings (deeper on light); `accent-fill` is the brand gold
+ * #cdb584 used as a fill behind dark text (buttons). On dark they're equal.
+ * Warning is for "your shipment is delayed"; danger is reserved for "you
+ * owe money". --glow-k scales every gold glow (softer on white).
+ *
+ * The theme is set before first paint by the inline script in layout.tsx
+ * (saved choice in localStorage "oxify-theme") and switched by ThemeToggle.
  */
-:root {
+:root,
+:root[data-theme="dark"] {
+  color-scheme: dark;
   --color-canvas: #06080d;
   --color-panel: rgba(13, 17, 25, 0.82);
   --color-tile: #111623;
@@ -20,10 +33,94 @@
   --color-disabled: #4a5263;
   --color-accent: #cdb584;
   --color-accent-hover: #d8c293;
+  --color-accent-fill: #cdb584;
+  --color-accent-fill-hover: #d8c293;
   --color-on-accent: #0a0d14;
   --color-warning: #e3a35a;
   --color-danger: #ef6b6b;
+
+  /* Formerly hard-coded in Dashboard.tsx. */
+  --color-step: #141a26; /* current / hovered journey step circle */
+  --color-step-done: #1b2230; /* completed step circle */
+  --color-step-future: #0d1119; /* upcoming step circle */
+  --color-avatar: #121722; /* order-specialist initials avatar */
+  --color-badge: #161b26; /* "Coming soon" document badge */
+  --color-stage-from: #1f2738; /* chamber photo / gallery stage, center */
+  --color-stage-to: #0d1119; /* chamber photo / gallery stage, edge */
+  --stage-stop: 70%; /* where the chamber photo stage reaches its edge color */
+  --color-tooltip: #111623;
+  --color-fade: rgba(13, 17, 25, 0.9); /* gallery "more photos" edge fade */
+  --color-shimmer: rgba(255, 255, 255, 0.03); /* photo loading pulse */
+  --shadow-panel: 0 0 #0000;
+  --shadow-panel-hover: 0 0 0 1px rgba(205, 181, 132, 0.14), 0 0 28px rgba(205, 181, 132, 0.1);
+  --shadow-tip: 0 18px 40px rgba(0, 0, 0, 0.55);
+  --photo-ring: 0 0 0 1px rgba(255, 255, 255, 0.06);
+  --photo-drop: 0 28px 60px rgba(0, 0, 0, 0.55);
+  --panel-blur: blur(12px);
+  --glow-k: 1;
+
+  /* Backdrop, particles and effects. */
+  --bg-glow-a: rgba(74, 112, 150, 0.2);
+  --bg-glow-b: rgba(74, 112, 150, 0.16);
+  --particle-rgb: 200, 178, 138;
+  --particle-min: 0.12;
+  --particle-max: 0.57;
+  --sweep: rgba(205, 181, 132, 0.16);
+  --sweep-core: rgba(255, 246, 222, 0.22);
 }
+
+:root[data-theme="light"] {
+  color-scheme: light;
+  --color-canvas: #f5f4f0;
+  --color-panel: #ffffff;
+  --color-tile: #f7f6f3;
+  --color-doc: #fbfaf8;
+  --color-line: #e6e3dc;
+  --color-line-strong: #d8d4cb;
+  --color-divider: #eeebe5;
+  --color-ink: #14171c;
+  --color-body: #4a505a;
+  --color-muted: #686e78;
+  --color-disabled: #a9aeb6;
+  --color-accent: #86683a;
+  --color-accent-hover: #6b522c;
+  --color-accent-fill: #cdb584;
+  --color-accent-fill-hover: #c2a670;
+  --color-on-accent: #14171c;
+  --color-warning: #9a5a0c;
+  --color-danger: #c0392b;
+
+  --color-step: #ffffff;
+  --color-step-done: #f8f4ea;
+  --color-step-future: #f7f6f3;
+  --color-avatar: #f8f4ea;
+  --color-badge: #efede8;
+  --color-stage-from: #fbfaf7;
+  --color-stage-to: #e9e6df;
+  --stage-stop: 75%;
+  --color-tooltip: #ffffff;
+  --color-fade: rgba(255, 255, 255, 0.9);
+  --color-shimmer: rgba(0, 0, 0, 0.03);
+  --shadow-panel: 0 1px 2px rgba(20, 23, 28, 0.04), 0 8px 24px rgba(20, 23, 28, 0.05);
+  --shadow-panel-hover: 0 1px 2px rgba(20, 23, 28, 0.04), 0 16px 38px rgba(20, 23, 28, 0.08), 0 0 0 1px rgba(205, 181, 132, 0.12);
+  --shadow-tip: 0 18px 40px rgba(20, 23, 28, 0.12);
+  --photo-ring: 0 0 0 1px rgba(20, 23, 28, 0.06);
+  --photo-drop: 0 24px 50px rgba(20, 23, 28, 0.18);
+  --panel-blur: none; /* opaque white cards: no blur needed (and it's costly) */
+  --glow-k: 0.55;
+
+  --bg-glow-a: rgba(205, 181, 132, 0.2);
+  --bg-glow-b: rgba(205, 181, 132, 0.16);
+  --particle-rgb: 134, 104, 58;
+  --particle-min: 0.16;
+  --particle-max: 0.5;
+  --sweep: rgba(255, 255, 255, 0.5);
+  --sweep-core: rgba(255, 246, 222, 0.35);
+}
+
+/* `light:` / `dark:` follow the chosen theme, not the OS setting. */
+@custom-variant dark (&:where([data-theme="dark"], [data-theme="dark"] *));
+@custom-variant light (&:where([data-theme="light"], [data-theme="light"] *));
 
 @theme inline {
   --color-canvas: var(--color-canvas);
@@ -39,23 +136,38 @@
   --color-disabled: var(--color-disabled);
   --color-accent: var(--color-accent);
   --color-accent-hover: var(--color-accent-hover);
+  --color-accent-fill: var(--color-accent-fill);
+  --color-accent-fill-hover: var(--color-accent-fill-hover);
   --color-on-accent: var(--color-on-accent);
+  --color-step: var(--color-step);
+  --color-step-done: var(--color-step-done);
+  --color-step-future: var(--color-step-future);
+  --color-avatar: var(--color-avatar);
+  --color-badge: var(--color-badge);
+  --color-tooltip: var(--color-tooltip);
+  --color-fade: var(--color-fade);
+  --color-shimmer: var(--color-shimmer);
   --color-warning: var(--color-warning);
   --color-danger: var(--color-danger);
   --font-sans: var(--font-inter);
 }
 
-html {
-  color-scheme: dark;
-}
-
 body {
   color: var(--color-ink);
   background-color: var(--color-canvas);
-  background-image:
-    radial-gradient(ellipse 60% 45% at -5% 8%, rgba(74, 112, 150, 0.2), transparent 70%),
-    radial-gradient(ellipse 50% 40% at 108% 92%, rgba(74, 112, 150, 0.16), transparent 70%);
-  background-attachment: fixed;
+}
+
+/* Panels: translucent + blurred on dark, opaque white on light. */
+.ox-card {
+  -webkit-backdrop-filter: var(--panel-blur);
+  backdrop-filter: var(--panel-blur);
+}
+
+/* Theme switch: a soft cross-fade (View Transitions, where supported). */
+::view-transition-old(root),
+::view-transition-new(root) {
+  animation-duration: 0.45s;
+  animation-timing-function: cubic-bezier(0.4, 0, 0.2, 1);
 }
 
 /* Status-dot halo — the dot's own text color sets the ring color. */
@@ -80,4 +192,290 @@ body {
     opacity: 1;
     transform: none;
   }
+}
+
+/* ------------------------------------------------------------------ *
+ * "Alive" effects (white-theme sample), trimmed for smoothness.
+ *
+ * Kept: entrance fade-up, the journey effects, the gold ring lights (status
+ * pill, order specialist), the document-card effects, button sheen and
+ * ripple, date-card line, progress bar, and the particles.
+ *
+ * Performance rules:
+ * - Every looping animation moves only `transform` or `opacity`, which the
+ *   GPU runs on its own (no per-frame style, layout or paint work).
+ * - Nothing follows the cursor — no per-mousemove restyling or
+ *   repainting of the page.
+ * - No filters (blur) animate.
+ * - html.ox-anim turns motion on (head script; skipped for reduced motion).
+ * - Without JS nothing is ever hidden.
+ * ------------------------------------------------------------------ */
+
+/* Soft corner glows behind the particles (blue on dark, gold on light): one
+   fixed, still layer. */
+body::before {
+  content: "";
+  position: fixed;
+  inset: 0;
+  z-index: -20;
+  pointer-events: none;
+  background:
+    radial-gradient(60% 45% at -5% 8%, var(--bg-glow-a), transparent 70%),
+    radial-gradient(50% 40% at 108% 92%, var(--bg-glow-b), transparent 70%);
+}
+
+/* Cards: the border warms on hover (no per-frame work). */
+.ox-card {
+  transition: border-color 0.3s ease, box-shadow 0.3s ease;
+}
+@media (hover: hover) and (pointer: fine) {
+  .ox-card:hover {
+    border-color: color-mix(in srgb, var(--color-accent) 26%, transparent);
+    box-shadow: var(--shadow-panel-hover);
+  }
+}
+
+/* Entrance: fade + rise; Alive.tsx adds .is-in and the stagger (--d). */
+.ox-anim .ox-reveal {
+  opacity: 0;
+  transform: translateY(16px);
+  transition:
+    opacity 0.8s cubic-bezier(0.2, 0.7, 0.2, 1) var(--d, 0ms),
+    transform 0.9s cubic-bezier(0.2, 0.7, 0.2, 1) var(--d, 0ms),
+    border-color 0.3s ease,
+    box-shadow 0.3s ease;
+}
+.ox-anim .ox-reveal.is-in {
+  opacity: 1;
+  transform: none;
+}
+/* Gold buttons: a glossy sheen passes across now and then. */
+.ox-sheen {
+  position: relative;
+  overflow: hidden;
+  isolation: isolate;
+}
+.ox-anim .ox-sheen::after {
+  content: "";
+  position: absolute;
+  inset: 0;
+  pointer-events: none;
+  background: linear-gradient(110deg, transparent 35%, rgba(255, 255, 255, 0.55) 50%, transparent 65%);
+  transform: translateX(-120%);
+  animation: ox-sheen 6s ease-in-out 1.6s infinite;
+}
+@keyframes ox-sheen {
+  0% { transform: translateX(-120%); }
+  20%, 100% { transform: translateX(120%); }
+}
+
+/* Gold light that travels around a rounded border (status pill, avatar): a
+   spinning conic square, clipped by the element, with a fill on top that
+   leaves only a thin rim showing. */
+.ox-ring {
+  position: relative;
+  overflow: hidden;
+  isolation: isolate;
+}
+.ox-anim .ox-ring::before,
+.ox-anim .ox-ring::after {
+  content: "";
+  position: absolute;
+  pointer-events: none;
+}
+.ox-anim .ox-ring::before {
+  z-index: -2;
+  left: 50%;
+  top: 50%;
+  width: max(260%, 120px);
+  aspect-ratio: 1;
+  background: conic-gradient(transparent 0 62%, rgba(205, 181, 132, 0.9) 80%, #fffaf0 85%, rgba(205, 181, 132, 0.9) 90%, transparent 100%);
+  transform: translate(-50%, -50%) rotate(0deg);
+  will-change: transform;
+  animation: ox-ring 4.5s linear infinite;
+}
+.ox-anim .ox-ring::after {
+  z-index: -1;
+  inset: 1.5px;
+  border-radius: inherit;
+  background: var(--ring-fill, var(--color-panel));
+}
+@keyframes ox-ring {
+  to { transform: translate(-50%, -50%) rotate(360deg); }
+}
+
+/* Journey: completed track draws in, steps pop in (one-time). */
+.ox-anim .ox-reveal.is-in .ox-grow {
+  transform-origin: left center;
+  animation: ox-grow-x 0.7s cubic-bezier(0.2, 0.7, 0.2, 1) var(--gd, 0ms) both;
+}
+@media (max-width: 719.98px) {
+  .ox-anim .ox-reveal.is-in .ox-grow {
+    transform-origin: center top;
+    animation-name: ox-grow-y;
+  }
+}
+@keyframes ox-grow-x {
+  from { transform: scaleX(0); }
+  to { transform: none; }
+}
+@keyframes ox-grow-y {
+  from { transform: scaleY(0); }
+  to { transform: none; }
+}
+.ox-anim .ox-reveal.is-in .ox-pop {
+  animation: ox-pop 0.6s cubic-bezier(0.3, 1.45, 0.5, 1) var(--gd, 0ms) both;
+}
+@keyframes ox-pop {
+  from { opacity: 0; transform: scale(0.7); }
+  to { opacity: 1; transform: none; }
+}
+
+/* Journey: light flows along the completed track toward the current step. */
+.ox-flow {
+  position: relative;
+  overflow: hidden;
+}
+.ox-anim .ox-flow::after {
+  content: "";
+  position: absolute;
+  inset: 0;
+  width: 45%;
+  pointer-events: none;
+  background: linear-gradient(90deg, transparent 0%, #fff7e3 45%, #cdb584 55%, transparent 100%);
+  transform: translateX(-100%);
+  animation: ox-flow-x 3.2s cubic-bezier(0.5, 0, 0.5, 1) var(--fd, 0ms) infinite;
+}
+@keyframes ox-flow-x {
+  0% { transform: translateX(-100%); }
+  45%, 100% { transform: translateX(230%); }
+}
+@media (max-width: 719.98px) {
+  .ox-anim .ox-flow::after {
+    width: auto;
+    height: 45%;
+    background: linear-gradient(180deg, transparent 0%, #fff7e3 45%, #cdb584 55%, transparent 100%);
+    transform: translateY(-100%);
+    animation-name: ox-flow-y;
+  }
+}
+@keyframes ox-flow-y {
+  0% { transform: translateY(-100%); }
+  45%, 100% { transform: translateY(230%); }
+}
+
+/* Current step: a breathing glow and sonar rings, both opacity/transform. */
+.ox-anim .ox-breathe {
+  position: relative;
+}
+.ox-anim .ox-breathe::before,
+.ox-anim .ox-breathe::after {
+  content: "";
+  position: absolute;
+  inset: -1.5px;
+  border-radius: 50%;
+  pointer-events: none;
+}
+.ox-anim .ox-breathe::before {
+  box-shadow: 0 0 0 10px rgba(205, 181, 132, 0.16), 0 0 30px rgba(205, 181, 132, 0.4);
+  opacity: 0;
+  animation: ox-breathe 2.8s ease-in-out infinite;
+}
+.ox-anim .ox-breathe::after {
+  border: 1.5px solid rgba(205, 181, 132, 0.7);
+  animation: ox-sonar 2.8s cubic-bezier(0.2, 0.6, 0.3, 1) infinite;
+}
+@keyframes ox-breathe {
+  0%, 100% { opacity: 0; }
+  50% { opacity: 1; }
+}
+@keyframes ox-sonar {
+  0% { transform: scale(1); opacity: 0.9; }
+  100% { transform: scale(1.9); opacity: 0; }
+}
+
+/* Light sweep across document cards on hover. */
+.ox-sweep {
+  position: relative;
+  overflow: hidden;
+}
+.ox-sweep::after {
+  content: "";
+  position: absolute;
+  inset: 0;
+  pointer-events: none;
+  background: linear-gradient(115deg, transparent 30%, var(--sweep) 48%, var(--sweep-core) 52%, transparent 70%);
+  transform: translateX(-130%);
+}
+.ox-anim .ox-sweep:hover::after {
+  transform: translateX(130%);
+  transition: transform 1s cubic-bezier(0.3, 0.6, 0.3, 1);
+}
+
+/* Document icon fills with gold when its card is hovered. */
+.ox-docicon {
+  transition: background-color 0.3s ease, color 0.3s ease, border-color 0.3s ease, transform 0.4s cubic-bezier(0.3, 1.5, 0.5, 1);
+}
+a:hover .ox-docicon {
+  background-color: var(--color-accent-fill);
+  border-color: var(--color-accent-fill);
+  color: var(--color-on-accent);
+  transform: rotate(-6deg) scale(1.08);
+}
+
+/* Date cards: a gold line draws across the top. */
+.ox-topline {
+  position: absolute;
+  inset: 0 0 auto 0;
+  height: 2px;
+  background: linear-gradient(90deg, transparent, #cdb584 20%, #e9d9b2 50%, #cdb584 80%, transparent);
+  transform-origin: left center;
+  pointer-events: none;
+}
+.ox-anim .ox-reveal .ox-topline {
+  transform: scaleX(0);
+}
+.ox-anim .ox-reveal.is-in .ox-topline {
+  transform: none;
+  transition: transform 1.2s cubic-bezier(0.2, 0.7, 0.2, 1) calc(var(--d, 0ms) + 250ms);
+}
+/* "Last checked" refresh icon spins once on arrival. */
+.ox-anim .ox-spin-once {
+  animation: ox-spin 1.1s cubic-bezier(0.4, 0, 0.2, 1) 0.7s both;
+}
+@keyframes ox-spin {
+  from { transform: rotate(0deg); }
+  to { transform: rotate(360deg); }
+}
+
+/* Gold ripple on tap / click (Alive.tsx adds the span). */
+.ox-ripple {
+  position: relative;
+  overflow: hidden;
+  isolation: isolate;
+}
+.ox-ripple-dot {
+  position: absolute;
+  border-radius: 50%;
+  pointer-events: none;
+  background: radial-gradient(circle, rgba(255, 250, 235, 0.75), rgba(205, 181, 132, 0.35) 45%, transparent 70%);
+  transform: translate(-50%, -50%) scale(0);
+  animation: ox-ripple 0.7s cubic-bezier(0.2, 0.7, 0.2, 1) forwards;
+}
+@keyframes ox-ripple {
+  to { transform: translate(-50%, -50%) scale(1); opacity: 0; }
+}
+
+/* Thin gold reading-progress bar along the top (Alive.tsx sets its transform). */
+.ox-progress {
+  position: fixed;
+  inset: 0 0 auto 0;
+  z-index: 50;
+  height: 2px;
+  background: linear-gradient(90deg, #cdb584, #e9d9b2, #a8874e);
+  transform-origin: left center;
+  transform: scaleX(0);
+  pointer-events: none;
+  box-shadow: 0 0 10px rgba(205, 181, 132, 0.6);
+  will-change: transform;
 }

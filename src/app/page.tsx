@@ -1,9 +1,9 @@
 "use client";
 
-import { useEffect, useState } from "react";
-import Image from "next/image";
+import { useEffect, useMemo, useState, useSyncExternalStore } from "react";
 import type { DashboardData } from "@/lib/clickup";
-import Dashboard from "@/components/Dashboard";
+import Dashboard, { Logo } from "@/components/Dashboard";
+import ThemeToggle from "@/components/ThemeToggle";
 import { CONTACT } from "@/lib/portalContent";
 
 // "Remember me" — fully automatic: a returning customer with a remembered
@@ -15,9 +15,22 @@ const REMEMBER_KEY = "oxify-portal-lookup";
 
 type Remembered = { orderNumber: string; email: string };
 
-function readRemembered(): Remembered | null {
+// What the server (and the browser's first, hydrating render) sees: the
+// saved order hasn't been read yet. Both render the same blank screen, so
+// the HTML matches; React then re-renders with the real value.
+const NOT_READ_YET = "\u0000not-read-yet";
+const subscribeNoop = () => () => {};
+
+function readStored(): string | null {
   try {
-    const raw = localStorage.getItem(REMEMBER_KEY);
+    return localStorage.getItem(REMEMBER_KEY);
+  } catch {
+    return null; // private browsing / storage disabled
+  }
+}
+
+function parseRemembered(raw: string | null): Remembered | null {
+  try {
     if (!raw) return null;
     const parsed = JSON.parse(raw);
     if (typeof parsed?.orderNumber === "string" && typeof parsed?.email === "string") {
@@ -25,7 +38,7 @@ function readRemembered(): Remembered | null {
     }
     return null;
   } catch {
-    return null; // private browsing / storage disabled / corrupt value
+    return null; // corrupt value
   }
 }
 
@@ -46,12 +59,13 @@ function clearRemembered() {
 }
 
 export default function LookupPage() {
-  // Computed once, synchronously, via a lazy initializer — not in an
-  // effect — so there's no setState-in-effect render cascade for the part
-  // that doesn't need to be async.
-  const [remembered] = useState<Remembered | null>(() => readRemembered());
-  const [orderNumber, setOrderNumber] = useState(remembered?.orderNumber ?? "");
-  const [email, setEmail] = useState(remembered?.email ?? "");
+  // Read localStorage only after hydration — reading it during the first
+  // render made the server HTML (the form) differ from the browser's (the
+  // blank checking screen), which React reports as a hydration error.
+  const stored = useSyncExternalStore(subscribeNoop, readStored, () => NOT_READ_YET);
+  const remembered = useMemo(() => (stored === NOT_READ_YET ? null : parseRemembered(stored)), [stored]);
+  const [orderNumber, setOrderNumber] = useState("");
+  const [email, setEmail] = useState("");
   // Explicit opt-in/opt-out toggle, defaulting on — a customer on a shared
   // device can switch it off before submitting so nothing gets saved (and
   // won't auto-log-in next visit on that device).
@@ -59,10 +73,11 @@ export default function LookupPage() {
   const [submitting, setSubmitting] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [dashboard, setDashboard] = useState<DashboardData | null>(null);
-  // While we try the automatic login, show a blank/loading screen instead
-  // of the form — avoids a flash of the empty form before silently
-  // jumping to the dashboard.
-  const [checkingRemembered, setCheckingRemembered] = useState(remembered !== null);
+  // While we try the automatic login (or haven't read storage yet), show a
+  // blank/loading screen instead of the form — avoids a flash of the empty
+  // form before silently jumping to the dashboard.
+  const [autoLoginDone, setAutoLoginDone] = useState(false);
+  const checkingRemembered = !autoLoginDone && (stored === NOT_READ_YET || remembered !== null);
 
   // Pure fetch — no setState calls in here. Callers each decide what to
   // do with the result, so setState always happens directly in the
@@ -86,25 +101,33 @@ export default function LookupPage() {
   }
 
   useEffect(() => {
-    if (!remembered) return; // checkingRemembered already initialized to false
+    if (autoLoginDone || !remembered) return; // nothing saved: checkingRemembered is already false
+    let cancelled = false;
     (async () => {
+      let data: DashboardData | null = null;
       try {
         const result = await fetchOrder(remembered.orderNumber, remembered.email);
-        if (result.status === "ok") {
-          setDashboard(result.data);
-        } else {
-          // Silent auto-login: on failure, just forget it and show the
-          // normal empty form — no error message for something the
-          // customer didn't actively submit themselves.
-          clearRemembered();
-        }
+        if (result.status === "ok") data = result.data;
       } catch {
-        clearRemembered();
-      } finally {
-        setCheckingRemembered(false);
+        // treated like a failed lookup below
       }
+      if (cancelled) return;
+      if (data) {
+        setDashboard(data);
+      } else {
+        // Silent auto-login: on failure, just forget it and show the
+        // normal form (prefilled) — no error message for something the
+        // customer didn't actively submit themselves.
+        clearRemembered();
+        setOrderNumber(remembered.orderNumber);
+        setEmail(remembered.email);
+      }
+      setAutoLoginDone(true);
     })();
-  }, [remembered]);
+    return () => {
+      cancelled = true;
+    };
+  }, [remembered, autoLoginDone]);
 
   async function handleSubmit(e: React.FormEvent) {
     e.preventDefault();
@@ -115,6 +138,8 @@ export default function LookupPage() {
       const result = await fetchOrder(orderNumber, email);
       if (result.status === "ok") {
         setDashboard(result.data);
+        // Saving below must not re-trigger the automatic login.
+        setAutoLoginDone(true);
         if (rememberMe) {
           writeRemembered({ orderNumber, email });
         } else {
@@ -140,32 +165,28 @@ export default function LookupPage() {
 
   function handleReset() {
     clearRemembered();
+    setAutoLoginDone(true);
     setDashboard(null);
     setOrderNumber("");
     setEmail("");
-  }
-
-  if (checkingRemembered) {
-    return <main className="flex-1" />;
   }
 
   if (dashboard) {
     return <Dashboard data={dashboard} onReset={handleReset} />;
   }
 
+  if (checkingRemembered) {
+    return <main className="flex-1" />;
+  }
+
   return (
     <main className="flex min-h-full flex-1 flex-col items-center justify-center px-[18px] py-16">
       <div className="flex w-full max-w-[420px] flex-col items-center gap-10">
-        <Image
-          src="/oxify-logo-white.png"
-          alt="Oxify"
-          width={1000}
-          height={359}
-          priority
-          className="h-[34px] w-auto"
-        />
+        <span className="ox-reveal">
+          <Logo priority className="h-[34px] w-auto" />
+        </span>
 
-        <div className="flex flex-col items-center gap-3 text-center">
+        <div className="ox-reveal flex flex-col items-center gap-3 text-center">
           <span className="text-[10.5px] font-semibold uppercase tracking-[2px] text-accent">{CONTACT.tagline}</span>
           <h1 className="text-balance text-[36px] font-semibold leading-[1.05] tracking-[-1.2px] text-ink">
             Track your order
@@ -176,9 +197,14 @@ export default function LookupPage() {
           </p>
         </div>
 
+        {/* Theme choice, right above the lookup card. */}
+        <div className="ox-reveal -mb-4 flex justify-center">
+          <ThemeToggle />
+        </div>
+
         <form
           onSubmit={handleSubmit}
-          className="flex w-full flex-col gap-4 rounded-2xl border border-line bg-panel p-6 backdrop-blur-md min-[720px]:p-7"
+          className="ox-card ox-reveal flex w-full flex-col gap-4 rounded-2xl border border-line bg-panel p-6 shadow-(--shadow-panel) min-[720px]:p-7"
         >
           <label className="flex flex-col gap-2">
             <span className="text-[12px] font-medium text-muted">Order number</span>
@@ -188,7 +214,7 @@ export default function LookupPage() {
               onChange={(e) => setOrderNumber(e.target.value)}
               placeholder="e.g. OXFY1020"
               autoCapitalize="characters"
-              className="min-h-12 rounded-[10px] border border-line-strong bg-tile px-3.5 text-[15px] text-ink outline-none transition-colors placeholder:text-disabled focus:border-accent"
+              className="min-h-12 rounded-[10px] border border-line-strong bg-tile light:bg-white px-3.5 text-[15px] text-ink outline-none transition-colors placeholder:text-disabled focus:border-accent"
             />
           </label>
 
@@ -201,7 +227,7 @@ export default function LookupPage() {
               onChange={(e) => setEmail(e.target.value)}
               placeholder="you@example.com"
               autoComplete="email"
-              className="min-h-12 rounded-[10px] border border-line-strong bg-tile px-3.5 text-[15px] text-ink outline-none transition-colors placeholder:text-disabled focus:border-accent"
+              className="min-h-12 rounded-[10px] border border-line-strong bg-tile light:bg-white px-3.5 text-[15px] text-ink outline-none transition-colors placeholder:text-disabled focus:border-accent"
             />
           </label>
 
@@ -218,7 +244,7 @@ export default function LookupPage() {
           <button
             type="submit"
             disabled={submitting}
-            className="mt-1 min-h-12 rounded-[10px] bg-accent px-4 text-[14px] font-semibold text-on-accent transition-all duration-200 hover:-translate-y-px hover:bg-accent-hover hover:shadow-[0_0_0_1px_rgba(205,181,132,.95),0_0_18px_rgba(205,181,132,.6),0_0_42px_rgba(205,181,132,.35)] disabled:translate-y-0 disabled:opacity-60 disabled:shadow-none"
+            className="ox-sheen mt-1 min-h-12 rounded-[10px] bg-accent-fill px-4 text-[14px] font-semibold text-on-accent transition-all duration-200 hover:-translate-y-px hover:bg-accent-fill-hover hover:shadow-[0_0_0_1px_rgba(205,181,132,calc(.95*var(--glow-k))),0_0_18px_rgba(205,181,132,calc(.6*var(--glow-k))),0_0_42px_rgba(205,181,132,calc(.35*var(--glow-k)))] disabled:translate-y-0 disabled:opacity-60 disabled:shadow-none"
           >
             {submitting ? "Looking up your order…" : "Track my order"}
           </button>
@@ -230,7 +256,7 @@ export default function LookupPage() {
           )}
         </form>
 
-        <p className="text-center text-[12px] leading-[1.7] text-muted">
+        <p className="ox-reveal text-center text-[12px] leading-[1.7] text-muted">
           Can&apos;t find your order? Call{" "}
           <a href={`tel:${CONTACT.phoneTel}`} className="text-ink underline underline-offset-[3px] hover:text-accent">
             {CONTACT.phoneDisplay}
