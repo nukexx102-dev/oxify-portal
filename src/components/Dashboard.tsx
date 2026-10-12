@@ -149,10 +149,10 @@ export default function Dashboard({ data, onReset }: Props) {
   const status = isDelayed
     ? { label: "Delayed", tone: "warning" as const }
     : order.status === "delivered"
-      ? { label: "Delivered", tone: "accent" as const }
+      ? { label: "Delivered", tone: "success" as const }
       : order.status === "delivery scheduled"
-        ? { label: "Scheduled", tone: "accent" as const }
-        : { label: "On Track", tone: "accent" as const };
+        ? { label: "Scheduled", tone: "success" as const }
+        : { label: "On Track", tone: "success" as const };
 
   const hasWaterChiller = order.configuration.some((c) => /water chiller/i.test(c));
   const detailRows: { icon: IconName; label: string; value: string; note?: string; muted?: boolean; href?: string }[] = [
@@ -254,17 +254,17 @@ export default function Dashboard({ data, onReset }: Props) {
           className={
             "ox-ring inline-flex items-center gap-2 rounded-full border py-1.5 pl-[11px] pr-[14px] " +
             (status.tone === "warning"
-              ? "border-warning/35 bg-warning/8 [--ring-fill:color-mix(in_srgb,var(--color-warning)_8%,var(--color-canvas))]"
-              : "border-accent/35 bg-accent/8 [--ring-fill:color-mix(in_srgb,var(--color-accent)_8%,var(--color-canvas))]")
+              ? "border-warning/35 bg-warning/8 [--ring-color:var(--color-warning)] [--ring-fill:color-mix(in_srgb,var(--color-warning)_8%,var(--color-canvas))]"
+              : "border-success/35 bg-success/8 [--ring-color:var(--color-success)] [--ring-fill:color-mix(in_srgb,var(--color-success)_8%,var(--color-canvas))]")
           }
         >
           <span
             className={
               "h-[7px] w-[7px] flex-none rounded-full [animation:ox-pulse_2.2s_ease-out_infinite] " +
-              (status.tone === "warning" ? "bg-warning text-warning/45" : "bg-accent text-accent/45")
+              (status.tone === "warning" ? "bg-warning text-warning/45" : "bg-success text-success/45")
             }
           />
-          <span className={"text-[12px] font-semibold tracking-[0.3px] " + (status.tone === "warning" ? "text-warning" : "text-accent")}>
+          <span className={"text-[12px] font-semibold tracking-[0.3px] " + (status.tone === "warning" ? "text-warning" : "text-success")}>
             {status.label}
           </span>
         </span>

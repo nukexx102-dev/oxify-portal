@@ -11,8 +11,8 @@
  * Gold is split in two so light passes WCAG AA: `accent` is the gold used for
  * text, icons and rings (deeper on light); `accent-fill` is the brand gold
  * #cdb584 used as a fill behind dark text (buttons). On dark they're equal.
- * Warning is for "your shipment is delayed"; danger is reserved for "you
- * owe money". --glow-k scales every gold glow (softer on white).
+ * Success (green) is the "On Track" status pill; warning (yellow) is for
+ * "your shipment is delayed"; danger is reserved for "you owe money". --glow-k scales every gold glow (softer on white).
  *
  * The theme is set before first paint by the inline script in layout.tsx
  * (saved choice in localStorage "oxify-theme") and switched by ThemeToggle.
@@ -36,7 +36,8 @@
   --color-accent-fill: #cdb584;
   --color-accent-fill-hover: #d8c293;
   --color-on-accent: #0a0d14;
-  --color-warning: #e3a35a;
+  --color-success: #5cc98a;
+  --color-warning: #f2c94c;
   --color-danger: #ef6b6b;
 
   /* Formerly hard-coded in Dashboard.tsx. */
@@ -87,7 +88,8 @@
   --color-accent-fill: #cdb584;
   --color-accent-fill-hover: #c2a670;
   --color-on-accent: #14171c;
-  --color-warning: #9a5a0c;
+  --color-success: #1f7a4a;
+  --color-warning: #8a6d00;
   --color-danger: #c0392b;
 
   --color-step: #ffffff;
@@ -147,6 +149,7 @@
   --color-tooltip: var(--color-tooltip);
   --color-fade: var(--color-fade);
   --color-shimmer: var(--color-shimmer);
+  --color-success: var(--color-success);
   --color-warning: var(--color-warning);
   --color-danger: var(--color-danger);
   --font-sans: var(--font-inter);
@@ -289,7 +292,13 @@ body::before {
   top: 50%;
   width: max(260%, 120px);
   aspect-ratio: 1;
-  background: conic-gradient(transparent 0 62%, rgba(205, 181, 132, 0.9) 80%, #fffaf0 85%, rgba(205, 181, 132, 0.9) 90%, transparent 100%);
+  background: conic-gradient(
+    transparent 0 62%,
+    color-mix(in srgb, var(--ring-color, #cdb584) 90%, transparent) 80%,
+    color-mix(in srgb, var(--ring-color, #cdb584) 25%, #fffaf0) 85%,
+    color-mix(in srgb, var(--ring-color, #cdb584) 90%, transparent) 90%,
+    transparent 100%
+  );
   transform: translate(-50%, -50%) rotate(0deg);
   will-change: transform;
   animation: ox-ring 4.5s linear infinite;
