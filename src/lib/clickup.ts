@@ -452,6 +452,38 @@ export async function lookupOrder(orderNumber: string, email: string): Promise<O
   };
 }
 
+export type OrderReminder = { orderNumber: string; firstName: string | null };
+
+// "Forgot your order number?": every order on file for this email. Reads
+// the whole list (it's small — one row per active order) and compares
+// emails in code, so a different capitalization in the CRM still matches.
+// Only the order number and first name leave this function; the caller
+// emails them to that same address and never shows them on screen.
+export async function findOrdersByEmail(email: string): Promise<OrderReminder[]> {
+  if (!ORDERS_LIST_ID) {
+    throw new Error("CLICKUP_ORDERS_LIST_ID is not set. Add it to .env.local (see .env.local.example).");
+  }
+  const normalizedEmail = email.trim().toLowerCase();
+  const found = new Map<string, OrderReminder>();
+
+  for (let page = 0; page < 20; page++) {
+    const data = await clickupGet<{ tasks?: RawTask[]; last_page?: boolean }>(
+      `/list/${ORDERS_LIST_ID}/task?include_closed=true&page=${page}`
+    );
+    for (const t of data.tasks ?? []) {
+      if (textValue(t.custom_fields, ORDER_FIELDS.customerEmail).toLowerCase() !== normalizedEmail) continue;
+      const orderNumber = textValue(t.custom_fields, ORDER_FIELDS.orderNumber).replace(/^#/, "").trim();
+      if (!orderNumber || found.has(normalizeOrderNumber(orderNumber))) continue;
+      found.set(normalizeOrderNumber(orderNumber), {
+        orderNumber,
+        firstName: textValue(t.custom_fields, ORDER_FIELDS.firstName) || null,
+      });
+    }
+    if (data.last_page !== false || (data.tasks ?? []).length === 0) break;
+  }
+  return [...found.values()].sort((a, b) => a.orderNumber.localeCompare(b.orderNumber, "en", { numeric: true }));
+}
+
 export type DashboardData = {
   order: OrderDetails;
   copy: StatusCopy;

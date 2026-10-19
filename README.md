@@ -8,6 +8,14 @@ ClickUp show up on the customer's next visit with no deploy.
 This is a separate app from the Morelli Medical portal: its own repo, its
 own Vercel project, and it reads only the Oxify space in ClickUp.
 
+**Forgot your order number?** On the sign-in page, a customer can enter
+their email and get the order number(s) on file emailed to that address
+(sent through Oxify's Resend account, from support@oxify.com). The page
+always gives the same answer whether or not the email is found, and the
+order number is never shown on screen. Limits: 3 emails per address and
+10 requests per device per hour. The email's "Track my order" button opens
+the portal with the order number filled in (`/?order=OXFY1020`).
+
 ## Where the data comes from
 
 ClickUp: **Oxify space › OXFY ORDER STATUS CRM** (filled by the Shopify →
@@ -86,6 +94,6 @@ npm run dev
 2. In Vercel, **Add New › Project**, import the new repo, and keep the
    default Next.js settings.
 3. Add the environment variables from `.env.local.example`
-   (`CLICKUP_API_TOKEN`, `CLICKUP_ORDERS_LIST_ID`) and deploy.
+   (`CLICKUP_API_TOKEN`, `CLICKUP_ORDERS_LIST_ID`, `RESEND_API_KEY`) and deploy.
 4. In the Vercel project's **Domains** settings, add `portal.oxify.com`,
    then add the DNS record Vercel shows you at Oxify's domain registrar.

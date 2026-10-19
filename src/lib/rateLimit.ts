@@ -11,7 +11,9 @@
 const WINDOW_MS = 15 * 60 * 1000; // 15 minutes
 const MAX_ATTEMPTS = 10;
 
-const attempts = new Map<string, { count: number; windowStart: number }>();
+type Limits = { max: number; windowMs: number };
+
+const attempts = new Map<string, { count: number; windowStart: number; windowMs: number }>();
 
 // Opportunistic cleanup so `attempts` doesn't grow unbounded across a long
 // warm-instance lifetime — cheap, doesn't need to be exact.
@@ -21,22 +23,24 @@ function sweepStale(now: number) {
   if (callsSinceSweep < 200) return;
   callsSinceSweep = 0;
   for (const [key, entry] of attempts) {
-    if (now - entry.windowStart > WINDOW_MS) attempts.delete(key);
+    if (now - entry.windowStart > entry.windowMs) attempts.delete(key);
   }
 }
 
-export function isRateLimited(key: string): boolean {
+// Callers with their own limits should namespace the key ("forgot:…") so
+// they don't share a counter with the order lookup.
+export function isRateLimited(key: string, limits: Limits = { max: MAX_ATTEMPTS, windowMs: WINDOW_MS }): boolean {
   const now = Date.now();
   sweepStale(now);
 
   const entry = attempts.get(key);
-  if (!entry || now - entry.windowStart > WINDOW_MS) {
-    attempts.set(key, { count: 1, windowStart: now });
+  if (!entry || now - entry.windowStart > entry.windowMs) {
+    attempts.set(key, { count: 1, windowStart: now, windowMs: limits.windowMs });
     return false;
   }
 
   entry.count += 1;
-  return entry.count > MAX_ATTEMPTS;
+  return entry.count > limits.max;
 }
 
 export function clientIp(req: Request): string {

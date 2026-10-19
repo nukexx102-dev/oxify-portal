@@ -21,6 +21,13 @@ type Remembered = { orderNumber: string; email: string };
 const NOT_READ_YET = "\u0000not-read-yet";
 const subscribeNoop = () => () => {};
 
+// "Track my order" in the forgot-order-number email links to /?order=…,
+// which prefills the order number (read after hydration, like the above).
+function readOrderParam(): string {
+  const v = new URLSearchParams(window.location.search).get("order") ?? "";
+  return /^#?[A-Za-z0-9-]{1,24}$/.test(v) ? v : "";
+}
+
 function readStored(): string | null {
   try {
     return localStorage.getItem(REMEMBER_KEY);
@@ -58,14 +65,28 @@ function clearRemembered() {
   }
 }
 
+const card =
+  "ox-card ox-reveal flex w-full flex-col gap-4 rounded-2xl border border-line bg-panel p-6 shadow-(--shadow-panel) min-[720px]:p-7";
+const input =
+  "min-h-12 rounded-[10px] border border-line-strong bg-tile light:bg-white px-3.5 text-[15px] text-ink outline-none transition-colors placeholder:text-disabled focus:border-accent";
+const goldButton =
+  "ox-sheen mt-1 min-h-12 rounded-[10px] bg-accent-fill px-4 text-[14px] font-semibold text-on-accent transition-all duration-200 hover:-translate-y-px hover:bg-accent-fill-hover hover:shadow-[0_0_0_1px_rgba(205,181,132,calc(.95*var(--glow-k))),0_0_18px_rgba(205,181,132,calc(.6*var(--glow-k))),0_0_42px_rgba(205,181,132,calc(.35*var(--glow-k)))] disabled:translate-y-0 disabled:opacity-60 disabled:shadow-none";
+const textLink =
+  "self-center rounded px-1 py-0.5 text-[12.5px] text-muted underline underline-offset-[3px] transition-colors hover:text-accent";
+
 export default function LookupPage() {
   // Read localStorage only after hydration — reading it during the first
   // render made the server HTML (the form) differ from the browser's (the
   // blank checking screen), which React reports as a hydration error.
   const stored = useSyncExternalStore(subscribeNoop, readStored, () => NOT_READ_YET);
   const remembered = useMemo(() => (stored === NOT_READ_YET ? null : parseRemembered(stored)), [stored]);
-  const [orderNumber, setOrderNumber] = useState("");
+  const orderParam = useSyncExternalStore(subscribeNoop, readOrderParam, () => "");
+  // null = untouched, so the ?order= prefill shows until the customer types.
+  const [orderNumberInput, setOrderNumber] = useState<string | null>(null);
+  const orderNumber = orderNumberInput ?? orderParam;
   const [email, setEmail] = useState("");
+  // "forgot" = the "Forgot your order number?" form; "sent" = its answer.
+  const [mode, setMode] = useState<"lookup" | "forgot" | "sent">("lookup");
   // Explicit opt-in/opt-out toggle, defaulting on — a customer on a shared
   // device can switch it off before submitting so nothing gets saved (and
   // won't auto-log-in next visit on that device).
@@ -163,10 +184,42 @@ export default function LookupPage() {
     }
   }
 
+  async function handleForgot(e: React.FormEvent) {
+    e.preventDefault();
+    setError(null);
+    setSubmitting(true);
+    try {
+      const res = await fetch("/api/orders/forgot", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ email }),
+      });
+      if (res.ok) {
+        setMode("sent");
+      } else if (res.status === 429) {
+        setError("Too many attempts — please wait a few minutes and try again, or contact us below.");
+      } else if (res.status === 400) {
+        setError("Please enter a valid email address.");
+      } else {
+        setError("Something went wrong. Try again in a moment, or contact us below.");
+      }
+    } catch {
+      setError("Couldn't reach the server. Check your connection and try again.");
+    } finally {
+      setSubmitting(false);
+    }
+  }
+
+  function switchMode(next: "lookup" | "forgot") {
+    setError(null);
+    setMode(next);
+  }
+
   function handleReset() {
     clearRemembered();
     setAutoLoginDone(true);
     setDashboard(null);
+    setMode("lookup");
     setOrderNumber("");
     setEmail("");
   }
@@ -189,11 +242,14 @@ export default function LookupPage() {
         <div className="ox-reveal flex flex-col items-center gap-3 text-center">
           <span className="text-[10.5px] font-semibold uppercase tracking-[2px] text-accent">{CONTACT.tagline}</span>
           <h1 className="text-balance text-[36px] font-semibold leading-[1.05] tracking-[-1.2px] text-ink">
-            Track your order
+            {mode === "lookup" ? "Track your order" : mode === "forgot" ? "Find your order number" : "Check your inbox"}
           </h1>
           <p className="max-w-[40ch] text-pretty text-[15px] font-light leading-[1.6] text-body">
-            Enter your order number and the email on your order to see live status,
-            delivery dates, and your documents.
+            {mode === "lookup"
+              ? "Enter your order number and the email on your order to see live status, delivery dates, and your documents."
+              : mode === "forgot"
+                ? "Enter the email address on your order and we'll send your order number to it."
+                : "If that email matches an Oxify order, we've sent your order number to it. It can take a minute to arrive — check your spam folder too."}
           </p>
         </div>
 
@@ -202,59 +258,98 @@ export default function LookupPage() {
           <ThemeToggle />
         </div>
 
-        <form
-          onSubmit={handleSubmit}
-          className="ox-card ox-reveal flex w-full flex-col gap-4 rounded-2xl border border-line bg-panel p-6 shadow-(--shadow-panel) min-[720px]:p-7"
-        >
-          <label className="flex flex-col gap-2">
-            <span className="text-[12px] font-medium text-muted">Order number</span>
-            <input
-              required
-              value={orderNumber}
-              onChange={(e) => setOrderNumber(e.target.value)}
-              placeholder="e.g. OXFY1020"
-              autoCapitalize="characters"
-              className="min-h-12 rounded-[10px] border border-line-strong bg-tile light:bg-white px-3.5 text-[15px] text-ink outline-none transition-colors placeholder:text-disabled focus:border-accent"
-            />
-          </label>
+        {mode === "lookup" && (
+          <form onSubmit={handleSubmit} className={card}>
+            <label className="flex flex-col gap-2">
+              <span className="text-[12px] font-medium text-muted">Order number</span>
+              <input
+                required
+                value={orderNumber}
+                onChange={(e) => setOrderNumber(e.target.value)}
+                placeholder="e.g. OXFY1020"
+                autoCapitalize="characters"
+                className={input}
+              />
+            </label>
 
-          <label className="flex flex-col gap-2">
-            <span className="text-[12px] font-medium text-muted">Email on the order</span>
-            <input
-              required
-              type="email"
-              value={email}
-              onChange={(e) => setEmail(e.target.value)}
-              placeholder="you@example.com"
-              autoComplete="email"
-              className="min-h-12 rounded-[10px] border border-line-strong bg-tile light:bg-white px-3.5 text-[15px] text-ink outline-none transition-colors placeholder:text-disabled focus:border-accent"
-            />
-          </label>
+            <label className="flex flex-col gap-2">
+              <span className="text-[12px] font-medium text-muted">Email on the order</span>
+              <input
+                required
+                type="email"
+                value={email}
+                onChange={(e) => setEmail(e.target.value)}
+                placeholder="you@example.com"
+                autoComplete="email"
+                className={input}
+              />
+            </label>
 
-          <label className="flex items-center gap-2.5 py-1">
-            <input
-              type="checkbox"
-              checked={rememberMe}
-              onChange={(e) => setRememberMe(e.target.checked)}
-              className="h-4 w-4 accent-accent"
-            />
-            <span className="text-[12.5px] text-body">Remember me on this device</span>
-          </label>
+            <label className="flex items-center gap-2.5 py-1">
+              <input
+                type="checkbox"
+                checked={rememberMe}
+                onChange={(e) => setRememberMe(e.target.checked)}
+                className="h-4 w-4 accent-accent"
+              />
+              <span className="text-[12.5px] text-body">Remember me on this device</span>
+            </label>
 
-          <button
-            type="submit"
-            disabled={submitting}
-            className="ox-sheen mt-1 min-h-12 rounded-[10px] bg-accent-fill px-4 text-[14px] font-semibold text-on-accent transition-all duration-200 hover:-translate-y-px hover:bg-accent-fill-hover hover:shadow-[0_0_0_1px_rgba(205,181,132,calc(.95*var(--glow-k))),0_0_18px_rgba(205,181,132,calc(.6*var(--glow-k))),0_0_42px_rgba(205,181,132,calc(.35*var(--glow-k)))] disabled:translate-y-0 disabled:opacity-60 disabled:shadow-none"
-          >
-            {submitting ? "Looking up your order…" : "Track my order"}
-          </button>
+            <button type="submit" disabled={submitting} className={goldButton}>
+              {submitting ? "Looking up your order…" : "Track my order"}
+            </button>
 
-          {error && (
-            <p role="alert" className="rounded-[10px] border border-warning/30 bg-warning/8 px-3.5 py-3 text-[12.5px] leading-[1.5] text-ink">
-              {error}
-            </p>
-          )}
-        </form>
+            {error && (
+              <p role="alert" className="rounded-[10px] border border-warning/30 bg-warning/8 px-3.5 py-3 text-[12.5px] leading-[1.5] text-ink">
+                {error}
+              </p>
+            )}
+
+            <button type="button" onClick={() => switchMode("forgot")} className={textLink}>
+              Forgot your order number?
+            </button>
+          </form>
+        )}
+
+        {mode === "forgot" && (
+          <form onSubmit={handleForgot} className={card}>
+            <label className="flex flex-col gap-2">
+              <span className="text-[12px] font-medium text-muted">Email on the order</span>
+              <input
+                required
+                autoFocus
+                type="email"
+                value={email}
+                onChange={(e) => setEmail(e.target.value)}
+                placeholder="you@example.com"
+                autoComplete="email"
+                className={input}
+              />
+            </label>
+
+            <button type="submit" disabled={submitting} className={goldButton}>
+              {submitting ? "Sending…" : "Email my order number"}
+            </button>
+
+            {error && (
+              <p role="alert" className="rounded-[10px] border border-warning/30 bg-warning/8 px-3.5 py-3 text-[12.5px] leading-[1.5] text-ink">
+                {error}
+              </p>
+            )}
+
+            <button type="button" onClick={() => switchMode("lookup")} className={textLink}>
+              ← Back to sign in
+            </button>
+          </form>
+        )}
+
+        {mode === "sent" && (
+          <div className={card}>
+            <button type="button" onClick={() => switchMode("lookup")} className={goldButton}>
+              Back to sign in
+            </button>
+          </div>
+        )}
 
         <p className="ox-reveal text-center text-[12px] leading-[1.7] text-muted">
           Can&apos;t find your order? Call{" "}
