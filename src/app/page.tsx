@@ -248,8 +248,8 @@ export default function LookupPage() {
             {mode === "lookup"
               ? "Enter your order number and the email on your order to see live status, delivery dates, and your documents."
               : mode === "forgot"
-                ? "Enter the email address on your order and we'll send your order number to it."
-                : "If that email matches an Oxify order, we've sent your order number to it. It can take a minute to arrive — check your spam folder too."}
+                ? "Enter the email address you used when you placed your order, and we'll send your order number to it."
+                : `If ${email.trim() || "that email"} matches an Oxify order, we've sent your order number to it. It can take a minute to arrive — check your spam folder too.`}
           </p>
         </div>
 
@@ -325,6 +325,9 @@ export default function LookupPage() {
                 autoComplete="email"
                 className={input}
               />
+              <span className="text-[12px] leading-[1.5] text-muted">
+                Use the same email you used at checkout. It&apos;s the one your order confirmation was sent to.
+              </span>
             </label>
 
             <button type="submit" disabled={submitting} className={goldButton}>
@@ -345,8 +348,15 @@ export default function LookupPage() {
 
         {mode === "sent" && (
           <div className={card}>
-            <button type="button" onClick={() => switchMode("lookup")} className={goldButton}>
-              Back to sign in
+            <p className="text-[13px] leading-[1.6] text-body">
+              Nothing after a few minutes? You may have used a different email when you ordered. Try another
+              one, or contact us below.
+            </p>
+            <button type="button" onClick={() => switchMode("forgot")} className={goldButton}>
+              Try a different email
+            </button>
+            <button type="button" onClick={() => switchMode("lookup")} className={textLink}>
+              ← Back to sign in
             </button>
           </div>
         )}
