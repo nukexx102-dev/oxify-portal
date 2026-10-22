@@ -152,6 +152,36 @@ export const PRE_PRODUCTION_STATUSES = new Set(["order received", "po sent/payme
 // Orders that ended another way — shown as a simple message, no rail.
 export const EXCEPTION_STATUSES = new Set(["cancelled", "refunded"]);
 
+// The ClickUp list's own status names (Oct 2026), mapped onto the journey
+// above. Keys are compared with punctuation and extra spaces removed, so
+// "delivered- waiting call" and "delivered - waiting call" both match.
+// Statuses not listed here are used as-is.
+const STATUS_ALIASES: Record<string, string> = {
+  "po sent payment needed": "po sent/payment needed",
+  "wg pick up scheduled": "delivery scheduled",
+  "wg delivery scheduled": "delivery scheduled",
+  "delivered waiting install": "installation scheduling",
+  "delivered waiting call": "installation scheduling",
+};
+
+// Statuses with their own copy that sit on another status's journey step.
+export const JOURNEY_STEP_FOR: Record<string, string> = {
+  "partially delivered": "delivery scheduled",
+};
+
+export type SetupMode = "onsite" | "remote" | null;
+
+// ClickUp status → the portal's status, plus how setup happens when ops
+// says so in the status itself ("waiting install" = a technician visit,
+// "waiting call" = a remote call). null = decide from the delivery method.
+export function canonicalStatus(raw: string): { status: string; setupMode: SetupMode } {
+  const key = raw.toLowerCase().replace(/[^a-z]+/g, " ").trim();
+  return {
+    status: STATUS_ALIASES[key] ?? raw.toLowerCase().trim(),
+    setupMode: key === "delivered waiting install" ? "onsite" : key === "delivered waiting call" ? "remote" : null,
+  };
+}
+
 export type StatusCopy = { heroHeadline: string; heroSub: string; whatHappensNext: string };
 
 // Default copy per status. Headlines, the line under them and "What happens
@@ -242,6 +272,14 @@ export const STATUS_COPY: Record<string, StatusCopy> = {
     heroSub: "We are currently finalizing the technician's schedule to guide you on your setup!",
     whatHappensNext:
       "Your chamber has been delivered. After 2–3 days, a certified technician will schedule a visit to complete the installation and walk you through hands-on training, subject to technician availability, travel and site readiness. We will reach out to confirm the date and time.",
+  },
+  // DRAFT, awaiting the owner's approval (added Oct 23, 2026 for the
+  // ClickUp "partially delivered" status).
+  "partially delivered": {
+    heroHeadline: "Part of your order has been delivered",
+    heroSub: "Some of your packages have arrived. The rest are on their way.",
+    whatHappensNext:
+      "Part of your order has been delivered, and the remaining packages are on their way to you. Once everything has arrived, our team will reach out to confirm the next steps.",
   },
   delivered: {
     heroHeadline: "You're all set!",

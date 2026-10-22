@@ -9,14 +9,17 @@
 
 import { libraryRows } from "@/lib/chamberPhotos";
 import {
+  canonicalStatus,
   deliveryFor,
   EXCEPTION_STATUSES,
   INSTALL_REMOTE_COPY,
   isSoftChamber,
   JOURNEY,
+  JOURNEY_STEP_FOR,
   PRE_PRODUCTION_STATUSES,
   SOFT_STATUS_COPY,
   STATUS_COPY,
+  type SetupMode,
   type StatusCopy,
 } from "@/lib/portalContent";
 
@@ -352,7 +355,9 @@ export type OrderDetails = {
   taskId: string;
   customerName: string;
   orderNumber: string;
-  status: string; // raw internal status, lowercase
+  status: string; // portal status, see canonicalStatus() (e.g. "wg- delivery scheduled" → "delivery scheduled")
+  rawStatus: string; // the ClickUp status as-is, lowercase
+  setupMode: SetupMode; // set by "delivered - waiting install / waiting call"
   chamberModel: string; // raw CRM dropdown value, e.g. "Nova Duo Pro"
   brand: string; // raw CRM dropdown value, e.g. "Oxify"
   deliveryMethod: string; // raw CRM dropdown value; see deliveryFor()
@@ -417,12 +422,16 @@ export async function lookupOrder(orderNumber: string, email: string): Promise<O
   const assignee = task.assignees?.[0];
   const coordinatorName = assignee?.username?.trim() || null;
   const deliveryWindow = textValue(fields, ORDER_FIELDS.deliveryWindow);
+  const rawStatus = (task.status?.status ?? "").toLowerCase();
+  const { status, setupMode } = canonicalStatus(rawStatus);
 
   return {
     taskId: task.id,
     customerName: customerNameFrom(task.name),
     orderNumber: textValue(fields, ORDER_FIELDS.orderNumber) || normalizeOrderNumber(orderNumber),
-    status: (task.status?.status ?? "").toLowerCase(),
+    status,
+    rawStatus,
+    setupMode,
     chamberModel: dropdownValue(fields, ORDER_FIELDS.chamberModel),
     brand: dropdownValue(fields, ORDER_FIELDS.brand),
     deliveryMethod: dropdownValue(fields, ORDER_FIELDS.deliveryMethod),
@@ -468,11 +477,14 @@ const FALLBACK_COPY: StatusCopy = {
 /** Copy for this order's status: a ClickUp row if one matches, else the built-in default. */
 async function getStatusCopy(order: OrderDetails): Promise<StatusCopy> {
   const soft = isSoftChamber(order.chamberType, order.chamberModel);
+  // Setup is remote when ops says so ("delivered - waiting call"), and
+  // always when the delivery method doesn't include on-site installation —
+  // a technician visit is never promised to those orders, whatever the status.
+  const remoteSetup = order.setupMode === "remote" || !deliveryFor(order.deliveryMethod, soft).onSiteInstall;
   const builtIn =
-    (soft ? SOFT_STATUS_COPY[order.status] : undefined) ??
-    (order.status === "installation scheduling" && !deliveryFor(order.deliveryMethod, soft).onSiteInstall
+    order.status === "installation scheduling" && remoteSetup
       ? INSTALL_REMOTE_COPY
-      : (STATUS_COPY[order.status] ?? FALLBACK_COPY));
+      : ((soft ? SOFT_STATUS_COPY[order.status] : undefined) ?? STATUS_COPY[order.status] ?? FALLBACK_COPY);
   if (!STATUS_COPY_LIST_ID) return builtIn;
 
   try {
@@ -481,7 +493,7 @@ async function getStatusCopy(order: OrderDetails): Promise<StatusCopy> {
       textValue(t.custom_fields, COPY_FIELDS.internalStatus)
         .split(",")
         .map((s) => s.trim().toLowerCase())
-        .includes(order.status)
+        .some((s) => s === order.status || s === order.rawStatus)
     );
     if (!row) return builtIn;
     return {
@@ -498,8 +510,12 @@ async function getStatusCopy(order: OrderDetails): Promise<StatusCopy> {
 export async function getDashboardData(order: OrderDetails): Promise<DashboardData> {
   const copy = await getStatusCopy(order);
   const kind = EXCEPTION_STATUSES.has(order.status) ? "exception" : "journey";
-  const currentStepIndex = PRE_PRODUCTION_STATUSES.has(order.status)
-    ? -1
-    : JOURNEY.findIndex((s) => s.status === order.status);
+  const step = JOURNEY_STEP_FOR[order.status] ?? order.status;
+  const currentStepIndex = PRE_PRODUCTION_STATUSES.has(order.status) ? -1 : JOURNEY.findIndex((s) => s.status === step);
+  if (kind === "journey" && currentStepIndex === -1 && !PRE_PRODUCTION_STATUSES.has(order.status)) {
+    // A ClickUp status the portal doesn't know yet: it shows as "not started".
+    // Add it to STATUS_ALIASES in portalContent.ts.
+    console.warn(`[status] unrecognized ClickUp status "${order.rawStatus}" on order ${order.orderNumber}`);
+  }
   return { order, copy, kind, currentStepIndex };
 }
