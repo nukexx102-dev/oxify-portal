@@ -311,9 +311,12 @@ export default function Dashboard({ data, onReset }: Props) {
         <p className="max-w-[56ch] text-pretty text-[15px] font-light leading-[1.6] text-body min-[720px]:text-[17px]">{fill(copy.heroSub)}</p>
       </section>
 
-      {order.hasModelPhoto && (
+      {/* Shown for every order with a chamber model; the photo half only
+          appears when there's a photo for this model + color. */}
+      {chamberName && (
         <ModelShowcase
           taskId={order.taskId}
+          hasPhoto={order.hasModelPhoto}
           name={chamberName || "Your chamber"}
           spec={product?.spec}
           about={product?.about}
@@ -762,6 +765,7 @@ function JourneyPanel({ currentStepIndex, delivery }: { currentStepIndex: number
 // shared publicly), the whole section quietly disappears.
 function ModelShowcase({
   taskId,
+  hasPhoto,
   name,
   spec,
   about,
@@ -769,6 +773,7 @@ function ModelShowcase({
   configuration,
 }: {
   taskId: string;
+  hasPhoto: boolean;
   name: string;
   spec?: string;
   about?: string;
@@ -776,34 +781,40 @@ function ModelShowcase({
   configuration: string[];
 }) {
   const [status, setStatus] = useState<"loading" | "loaded" | "failed">("loading");
-  if (status === "failed") return null;
+  // No photo for this model + color (or it didn't load): the details still
+  // show, full width, so the customer always sees which chamber they ordered.
+  const showPhoto = hasPhoto && status !== "failed";
 
   return (
-    <section className={`${panel} mt-4 grid grid-cols-1 overflow-hidden min-[720px]:grid-cols-[1.3fr_1fr]`}>
-      <div className="group/photo relative aspect-[4/3] overflow-hidden bg-[radial-gradient(ellipse_at_50%_35%,var(--color-stage-from)_0%,var(--color-stage-to)_var(--stage-stop))] min-[720px]:aspect-auto min-[720px]:min-h-[360px]">
-        {status === "loading" && <div className="absolute inset-0 animate-pulse bg-shimmer" aria-hidden="true" />}
-        {/* Soft gold "floor" light under the chamber. */}
-        <div
-          aria-hidden="true"
-          className="pointer-events-none absolute bottom-[7%] left-1/2 h-[16%] w-[68%] -translate-x-1/2 rounded-[50%] bg-accent/20 blur-3xl transition-colors duration-500 group-hover/photo:bg-accent/40 light:bg-accent-fill/35 light:group-hover/photo:bg-accent-fill/60"
-        />
-        {/* The image keeps its own proportions and is framed as a rounded
-            card, so studio shots on a light background read as a photo
-            rather than a hard-edged white box on the dark stage. */}
-        <div className="absolute inset-0 flex items-center justify-center p-5 min-[720px]:p-8">
-          {/* eslint-disable-next-line @next/next/no-img-element -- dynamic same-origin proxy URL, not a static asset */}
-          <img
-            src={`/api/orders/model-photo?taskId=${encodeURIComponent(taskId)}`}
-            alt={`${name} hyperbaric chamber`}
-            onLoad={() => setStatus("loaded")}
-            onError={() => setStatus("failed")}
-            className={
-              "max-h-full max-w-full rounded-[18px] object-contain shadow-[var(--photo-ring),var(--photo-drop),0_0_44px_rgba(205,181,132,calc(0.12*var(--glow-k)))] transition-[opacity,scale,box-shadow] duration-500 ease-out group-hover/photo:scale-[1.07] group-hover/photo:shadow-[0_0_0_1px_rgba(205,181,132,calc(0.75*var(--glow-k))),var(--photo-drop),0_0_32px_rgba(205,181,132,calc(0.55*var(--glow-k))),0_0_90px_rgba(205,181,132,calc(0.3*var(--glow-k)))] " +
-              (status === "loaded" ? "scale-100 opacity-100" : "scale-[1.02] opacity-0")
-            }
+    <section
+      className={`${panel} mt-4 grid grid-cols-1 overflow-hidden ${showPhoto ? "min-[720px]:grid-cols-[1.3fr_1fr]" : ""}`}
+    >
+      {showPhoto && (
+        <div className="group/photo relative aspect-[4/3] overflow-hidden bg-[radial-gradient(ellipse_at_50%_35%,var(--color-stage-from)_0%,var(--color-stage-to)_var(--stage-stop))] min-[720px]:aspect-auto min-[720px]:min-h-[360px]">
+          {status === "loading" && <div className="absolute inset-0 animate-pulse bg-shimmer" aria-hidden="true" />}
+          {/* Soft gold "floor" light under the chamber. */}
+          <div
+            aria-hidden="true"
+            className="pointer-events-none absolute bottom-[7%] left-1/2 h-[16%] w-[68%] -translate-x-1/2 rounded-[50%] bg-accent/20 blur-3xl transition-colors duration-500 group-hover/photo:bg-accent/40 light:bg-accent-fill/35 light:group-hover/photo:bg-accent-fill/60"
           />
+          {/* The image keeps its own proportions and is framed as a rounded
+              card, so studio shots on a light background read as a photo
+              rather than a hard-edged white box on the dark stage. */}
+          <div className="absolute inset-0 flex items-center justify-center p-5 min-[720px]:p-8">
+            {/* eslint-disable-next-line @next/next/no-img-element -- dynamic same-origin proxy URL, not a static asset */}
+            <img
+              src={`/api/orders/model-photo?taskId=${encodeURIComponent(taskId)}`}
+              alt={`${name} hyperbaric chamber`}
+              onLoad={() => setStatus("loaded")}
+              onError={() => setStatus("failed")}
+              className={
+                "max-h-full max-w-full rounded-[18px] object-contain shadow-[var(--photo-ring),var(--photo-drop),0_0_44px_rgba(205,181,132,calc(0.12*var(--glow-k)))] transition-[opacity,scale,box-shadow] duration-500 ease-out group-hover/photo:scale-[1.07] group-hover/photo:shadow-[0_0_0_1px_rgba(205,181,132,calc(0.75*var(--glow-k))),var(--photo-drop),0_0_32px_rgba(205,181,132,calc(0.55*var(--glow-k))),0_0_90px_rgba(205,181,132,calc(0.3*var(--glow-k)))] " +
+                (status === "loaded" ? "scale-100 opacity-100" : "scale-[1.02] opacity-0")
+              }
+            />
+          </div>
         </div>
-      </div>
+      )}
 
       <div className="flex flex-col justify-center gap-4 px-5 pb-6 pt-5 min-[720px]:px-9 min-[720px]:py-10">
         <span className={`${eyebrow} text-accent`}>Your hyperbaric chamber</span>
