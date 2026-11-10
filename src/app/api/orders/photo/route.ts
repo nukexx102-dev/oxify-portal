@@ -23,26 +23,39 @@ export async function GET(req: NextRequest) {
   }
 
   try {
-    const photo = await getOrderPhoto(taskId, attachmentId);
-    if (!photo) {
+    const sources = await getOrderPhoto(taskId, attachmentId);
+    if (!sources) {
       return NextResponse.json({ error: "photo_not_found" }, { status: 404 });
     }
 
-    const imageRes = await fetch(photo.url, { headers: { Authorization: token }, cache: "no-store" });
-    if (!imageRes.ok || !imageRes.body) {
-      return NextResponse.json({ error: "image_fetch_failed" }, { status: 502 });
+    // Only real image bytes are passed on — a Drive file that isn't shared
+    // publicly answers with an HTML page, not an error status.
+    for (const src of sources) {
+      const res = await fetch(src.url, {
+        headers: src.withClickUpToken ? { Authorization: token } : undefined,
+        cache: "no-store",
+        redirect: "follow",
+      });
+      const type = res.headers.get("content-type") ?? "";
+      // ClickUp may label an uploaded file as a generic download; anything
+      // else must say it's an image.
+      const isImage =
+        type.startsWith("image/") || (src.withClickUpToken && /^(application|binary)\/octet-stream/.test(type));
+      if (res.ok && res.body && isImage) {
+        return new NextResponse(res.body, {
+          status: 200,
+          headers: {
+            "Content-Type": type.startsWith("image/") ? type : "image/jpeg",
+            // Once bytes are served to the browser they're cached as the
+            // final image, independent of whether the underlying URL later
+            // expires — safe to cache for a while.
+            "Cache-Control": "private, max-age=3600",
+          },
+        });
+      }
     }
-
-    return new NextResponse(imageRes.body, {
-      status: 200,
-      headers: {
-        "Content-Type": photo.mimetype || imageRes.headers.get("content-type") || "image/jpeg",
-        // Once bytes are served to the browser they're cached as the final
-        // image, independent of whether ClickUp's underlying URL later
-        // expires — safe to cache for a while.
-        "Cache-Control": "private, max-age=3600",
-      },
-    });
+    console.error("[orders/photo] no image at the file's link — if it's a Drive file, is it shared publicly?");
+    return NextResponse.json({ error: "image_unavailable" }, { status: 502 });
   } catch (err) {
     console.error("[orders/photo]", err);
     return NextResponse.json({ error: "server_error" }, { status: 500 });

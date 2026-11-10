@@ -130,21 +130,40 @@ async function fetchPhotos(taskId: string): Promise<{ id: string; title: string 
   }
 }
 
+// Files uploaded to ClickUp itself are served from these hosts; only they
+// ever get the ClickUp token.
+function isClickUpFileHost(hostname: string): boolean {
+  return /(^|\.)clickup\.com$|(^|\.)clickup-attachments\.com$/i.test(hostname);
+}
+
+export type PhotoSource = { url: string; withClickUpToken: boolean };
+
 /**
- * A fresh download URL for one Order Photos file. Returns null unless the
+ * Where to fetch one Order Photos file, best first. Returns null unless the
  * task is on the Oxify orders list and the file is in its Order Photos
  * field, so the photo route can't be used to read other ClickUp files.
+ *
+ * Ops attach photos two ways: uploaded to ClickUp (fetched with the token),
+ * or linked from Google Drive (the link opens Drive's viewer page, so it's
+ * turned into Drive's image URLs, like the model photo — and the ClickUp
+ * token is never sent there).
  */
-export async function getOrderPhoto(
-  taskId: string,
-  fileId: string
-): Promise<{ url: string; mimetype: string | null } | null> {
+export async function getOrderPhoto(taskId: string, fileId: string): Promise<PhotoSource[] | null> {
   if (!ORDERS_LIST_ID) return null;
   const task = await clickupGet<RawTask>(`/task/${encodeURIComponent(taskId)}`);
   if (task.list?.id !== ORDERS_LIST_ID) return null;
   const file = orderPhotoFiles(task.custom_fields).find((a) => a.id === fileId);
   const url = file?.url ?? file?.url_w_host;
-  return url ? { url, mimetype: file?.mimetype ?? null } : null;
+  if (!url) return null;
+
+  let host = "";
+  try {
+    host = new URL(url).hostname;
+  } catch {
+    return null;
+  }
+  if (isClickUpFileHost(host)) return [{ url, withClickUpToken: true }];
+  return (modelPhotoSource(url) ?? []).map((u) => ({ url: u, withClickUpToken: false }));
 }
 
 // The "HBot Photo (model)" field holds a Google Drive share link, which
